@@ -21,9 +21,6 @@
     <ClCompile Include="Les1.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="..\..\..\..\..\OpenGL\glad\src\glad.c">
-      <Filter>Source Files</Filter>
-    </ClCompile>
     <ClCompile Include="Les2.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
@@ -36,12 +33,24 @@
     <ClCompile Include="Les4.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
+    <ClCompile Include="OpenGL Includes\glad\src\glad.c">
+      <Filter>Source Files</Filter>
+    </ClCompile>
+    <ClCompile Include="Les5.cpp">
+      <Filter>Source Files</Filter>
+    </ClCompile>
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="stb_image.h">
       <Filter>Header Files</Filter>
     </ClInclude>
     <ClInclude Include="utils.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="mesh.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="model.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
@@ -62,6 +71,12 @@
       <Filter>Source Files</Filter>
     </None>
     <None Include="vertexShaderSkyLes5.shader">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="fragModel.shader">
+      <Filter>Source Files</Filter>
+    </None>
+    <None Include="vertModel.shader">
       <Filter>Source Files</Filter>
     </None>
   </ItemGroup>

@@ -1,8 +1,16 @@
-﻿  Les4.cpp
-C:\Users\tomre\source\repos\OpenGL HKU\utils.h(10,15): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
-C:\Users\tomre\source\repos\OpenGL HKU\utils.h(100,11): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\tomre\source\repos\OpenGL HKU\Les4.cpp(138,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\source\repos\OpenGL HKU\Les4.cpp(84,11): warning C4102: 'https': unreferenced label
-C:\Users\tomre\source\repos\OpenGL HKU\Les4.cpp(181,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\source\repos\OpenGL HKU\Les4.cpp(212,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-  OpenGL HKU.vcxproj -> C:\Users\tomre\source\repos\OpenGL HKU\Debug\OpenGL HKU.exe
+﻿  Les5.cpp
+C:\Users\tomre\Documents\OpenGL_Huiswerk\utils.h(8,15): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(166,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(212,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(243,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(432,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(478,15): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(480,16): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'double'
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(480,16): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 3 has type 'double'
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(482,36): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
+          with
+          [
+              T=float
+          ]
+C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(561,43): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+  OpenGL HKU.vcxproj -> C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\OpenGL HKU.exe

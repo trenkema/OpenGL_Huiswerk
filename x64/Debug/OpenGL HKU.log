@@ -1,0 +1,9 @@
+﻿  Les1.cpp
+  Les2.cpp
+  Les2_Test.cpp
+  Les3.cpp
+  Les4.cpp
+  Les5.cpp
+C:\Users\tomre\Documents\OpenGL_Huiswerk\model.h(9,10): fatal error C1083: Cannot open include file: 'assimp/Importer.hpp': No such file or directory
+  main.cpp
+  Generating Code...
