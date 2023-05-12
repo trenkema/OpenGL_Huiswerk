@@ -1,6 +1,2 @@
 C:\Users\tomre\source\repos\OpenGL HKU\Debug\OpenGL HKU.exe
 C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\OpenGL HKU.exe
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\OpenGL HKU.vcxproj.CopyComplete
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\assimp-vc142-mtd.dll
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\zlibd1.dll
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\pugixml.dll

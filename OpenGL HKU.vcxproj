@@ -88,13 +88,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\tomre\Downloads\assimp_dlls;C:\OpenGL Includes\glm;C:\OpenGL Includes\glfw\include;C:\OpenGL Includes\glew\include;C:\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\imgui;C:\Users\tomre\Downloads\assimp_dlls;C:\OpenGL Includes\glm;C:\OpenGL Includes\glfw\include;C:\OpenGL Includes\glew\include;C:\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\tomre\Downloads\glew-2.1.0\glew-2.1.0\lib\Release\Win32;C:\Users\tomre\Downloads\glfw-3.3.8.bin.WIN32\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glui2;C:\Users\tomre\Downloads\glew-2.1.0\glew-2.1.0\lib\Release\Win32;C:\Users\tomre\Downloads\glfw-3.3.8.bin.WIN32\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -106,7 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\tomre\Downloads\assimp_dlls;C:\OpenGL Includes\glm;C:\OpenGL Includes\glfw\include;C:\OpenGL Includes\glew\include;C:\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\imgui;C:\Users\tomre\Downloads\assimp_dlls;C:\OpenGL Includes\glm;C:\OpenGL Includes\glfw\include;C:\OpenGL Includes\glew\include;C:\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -114,8 +114,9 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\tomre\Downloads\glew-2.1.0\glew-2.1.0\lib\Release\Win32;C:\Users\tomre\Downloads\glfw-3.3.8.bin.WIN32\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glui2;C:\Users\tomre\Downloads\glew-2.1.0\glew-2.1.0\lib\Release\Win32;C:\Users\tomre\Downloads\glfw-3.3.8.bin.WIN32\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
+      <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
   </ItemDefinitionGroup>
   <ItemDefinitionGroup Condition="'$(Configuration)|$(Platform)'=='Debug|x64'">
@@ -149,6 +150,7 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
+    <ClCompile Include="FinalAssignment.cpp" />
     <ClCompile Include="Les1.cpp" />
     <ClCompile Include="Les2.cpp" />
     <ClCompile Include="Les2_Test.cpp" />
@@ -157,18 +159,36 @@
     <ClCompile Include="Les5.cpp" />
     <ClCompile Include="main.cpp" />
     <ClCompile Include="OpenGL Includes\glad\src\glad.c" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui.cpp" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui_demo.cpp" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui_draw.cpp" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui_impl_glfw.cpp" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui_impl_opengl3.cpp" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui_tables.cpp" />
+    <ClCompile Include="OpenGL Includes\imgui\imgui_widgets.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="mesh.h" />
     <ClInclude Include="model.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imconfig.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imgui.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imgui_impl_glfw.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imgui_impl_opengl3.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imgui_impl_opengl3_loader.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imgui_internal.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imstb_rectpack.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imstb_textedit.h" />
+    <ClInclude Include="OpenGL Includes\imgui\imstb_truetype.h" />
     <ClInclude Include="stb_image.h" />
     <ClInclude Include="utils.h" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="fragmentShaderFinalAssignment.shader" />
     <None Include="fragmentShaderLes2.shader" />
     <None Include="fragmentShaderLes5.shader" />
     <None Include="fragmentShaderSkyLes5.shader" />
     <None Include="fragModel.shader" />
+    <None Include="vertexShaderFinalAssignment.shader" />
     <None Include="vertexShaderLes2.shader" />
     <None Include="vertexShaderLes5.shader" />
     <None Include="vertexShaderSkyLes5.shader" />

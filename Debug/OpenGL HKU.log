@@ -1,16 +1,25 @@
-﻿  Les5.cpp
-C:\Users\tomre\Documents\OpenGL_Huiswerk\utils.h(8,15): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(166,25): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(212,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(243,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(432,13): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(478,15): warning C4244: 'initializing': conversion from 'float' to 'int', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(480,16): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 1 has type 'double'
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(480,16): warning C4477: 'printf' : format string '%d' requires an argument of type 'int', but variadic argument 3 has type 'double'
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(482,36): warning C4244: '=': conversion from 'int' to 'T', possible loss of data
-          with
-          [
-              T=float
-          ]
-C:\Users\tomre\Documents\OpenGL_Huiswerk\Les5.cpp(561,43): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+﻿  FinalAssignment.cpp
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(64,25): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(95,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(201,12): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(445,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(485,39): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(486,33): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+  Les1.cpp
+  Les2.cpp
+  Les2_Test.cpp
+  Les3.cpp
+  Les4.cpp
+  Les5.cpp
+  main.cpp
+  imgui.cpp
+  imgui_demo.cpp
+  imgui_draw.cpp
+  imgui_impl_glfw.cpp
+  imgui_impl_opengl3.cpp
+  imgui_tables.cpp
+  imgui_widgets.cpp
+  Generating Code...
+  glad.c
+LINK : warning LNK4098: defaultlib 'MSVCRT' conflicts with use of other libs; use /NODEFAULTLIB:library
   OpenGL HKU.vcxproj -> C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\OpenGL HKU.exe
