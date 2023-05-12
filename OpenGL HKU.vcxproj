@@ -88,13 +88,13 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;_DEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\imgui;C:\Users\tomre\Downloads\assimp_dlls;C:\OpenGL Includes\glm;C:\OpenGL Includes\glfw\include;C:\OpenGL Includes\glew\include;C:\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\imgui;C:\Users\tomre\Downloads\assimp_dlls;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glm;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glfw\include;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glew\include;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
       <SubSystem>Console</SubSystem>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glui2;C:\Users\tomre\Downloads\glew-2.1.0\glew-2.1.0\lib\Release\Win32;C:\Users\tomre\Downloads\glfw-3.3.8.bin.WIN32\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glui2;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glew\lib\Release\Win32;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glfw\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
     </Link>
   </ItemDefinitionGroup>
@@ -106,7 +106,7 @@
       <SDLCheck>true</SDLCheck>
       <PreprocessorDefinitions>WIN32;NDEBUG;_CONSOLE;%(PreprocessorDefinitions)</PreprocessorDefinitions>
       <ConformanceMode>true</ConformanceMode>
-      <AdditionalIncludeDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\imgui;C:\Users\tomre\Downloads\assimp_dlls;C:\OpenGL Includes\glm;C:\OpenGL Includes\glfw\include;C:\OpenGL Includes\glew\include;C:\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
+      <AdditionalIncludeDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\imgui;C:\Users\tomre\Downloads\assimp_dlls;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glm;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glfw\include;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glew\include;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glad\include;%(AdditionalIncludeDirectories)</AdditionalIncludeDirectories>
       <RuntimeLibrary>MultiThreadedDebugDLL</RuntimeLibrary>
     </ClCompile>
     <Link>
@@ -114,7 +114,7 @@
       <EnableCOMDATFolding>true</EnableCOMDATFolding>
       <OptimizeReferences>true</OptimizeReferences>
       <GenerateDebugInformation>true</GenerateDebugInformation>
-      <AdditionalLibraryDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glui2;C:\Users\tomre\Downloads\glew-2.1.0\glew-2.1.0\lib\Release\Win32;C:\Users\tomre\Downloads\glfw-3.3.8.bin.WIN32\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
+      <AdditionalLibraryDirectories>C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glui2;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glew\lib\Release\Win32;C:\Users\tomre\Documents\OpenGL_Huiswerk\OpenGL Includes\glfw\lib-vc2019;C:\Users\tomre\vcpkg\installed\x86-windows\lib;%(AdditionalLibraryDirectories)</AdditionalLibraryDirectories>
       <AdditionalDependencies>opengl32.lib;glew32.lib;glfw3.lib;%(AdditionalDependencies)</AdditionalDependencies>
       <EntryPointSymbol>mainCRTStartup</EntryPointSymbol>
     </Link>
