@@ -20,6 +20,8 @@ using namespace glm;
 using namespace std;
 using namespace ImGui;
 
+float cameraSensitivity = 15.0f;
+float cameraSpeed = 2.0f;
 vec3 cameraPosition(0, 0, -10), cameraForward(0, 0, 1), cameraUp(0, 1, 0);
 bool showCursor = true;
 
@@ -144,9 +146,8 @@ void HandleInput(GLFWwindow* window, float deltaTime) {
 	static bool w, s, a, d, space, ctrl;
 	static double cursorX = -1, cursorY = -1, lastCursorX, lastCursorY;
 	static float pitch, yaw;
-	static float speed = 1.0f;
-	float sensitivity = 5.0f * deltaTime;
-	float step = speed * deltaTime;
+	float sensitivity = cameraSensitivity * deltaTime;
+	float speed = cameraSpeed * deltaTime;
 
 	if (showCursor) return;
 
@@ -184,12 +185,12 @@ void HandleInput(GLFWwindow* window, float deltaTime) {
 	// update camera position / forward & up
 	glm::vec3 translation(0, 0, 0);
 	//implement movement
-	if (w) translation.z += speed * deltaTime;
-	if (s) translation.z -= speed * deltaTime;
-	if (a) translation.x += speed * deltaTime;
-	if (d) translation.x -= speed * deltaTime;
-	if (space) translation.y += speed * deltaTime;
-	if (ctrl) translation.y -= speed * deltaTime;
+	if (w) translation.z += speed;
+	if (s) translation.z -= speed;
+	if (a) translation.x += speed;
+	if (d) translation.x -= speed;
+	if (space) translation.y += speed;
+	if (ctrl) translation.y -= speed;
 	cameraPosition += q * translation;
 	cameraUp = q * glm::vec3(0, 1, 0);
 	cameraForward = q * glm::vec3(0, 0, 1);
@@ -445,6 +446,7 @@ int main()
 		float deltaTime = time - previousT;
 		previousT = time;
 		HandleInput(window, deltaTime);
+		float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
 
 		if (showCursor)
 		{
@@ -462,7 +464,7 @@ int main()
 		world = glm::scale(world, glm::vec3(1, 1, 1));
 		world = glm::translate(world, glm::vec3(0, 0, 0));
 		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraForward, cameraUp);
-		glm::mat4 projection = glm::perspective(glm::radians(65.0f), mode->width / (float)mode->height, 0.01f, 1000.0f);
+		glm::mat4 projection = glm::perspective(glm::radians(65.0f), mode->width / (float)mode->height, 0.0001f, 1000.0f);
 		glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
@@ -512,6 +514,44 @@ int main()
 		ImVec2 newLightSettingsWindowPosition = ImVec2(50, 50);
 		SetWindowPos(newLightSettingsWindowPosition);
 		SetWindowFontScale(1.25f);
+
+		Text("Camera Sensitivity:");
+		SameLine(0.0f, spacing);
+
+		PushButtonRepeat(true);
+		if (ArrowButton("#leftSensitivity", ImGuiDir_Left))
+		{
+			cameraSensitivity--;
+			cameraSensitivity = Clamp(cameraSensitivity, 0, 100);
+		}
+
+		SameLine(0.0f, spacing);
+		Text("%f", cameraSensitivity);
+		SameLine(0.0f, spacing);
+
+		if (ArrowButton("#rightSensitivity", ImGuiDir_Right))
+		{
+			cameraSensitivity++;
+		}
+
+		Text("Camera Speed:");
+		SameLine(0.0f, spacing);
+
+		if (ArrowButton("#leftSpeed", ImGuiDir_Left))
+		{
+			cameraSpeed--;
+			cameraSpeed = Clamp(cameraSpeed, 0, 100);
+		}
+
+		SameLine(0.0f, spacing);
+		Text("%f", cameraSpeed);
+		SameLine(0.0f, spacing);
+
+		if (ArrowButton("#rightSpeed", ImGuiDir_Right))
+		{
+			cameraSpeed++;
+		}
+		PopButtonRepeat();
 
 		if (Button("Add Light", ImVec2(260, 20)))
 		{
@@ -578,12 +618,12 @@ int main()
 		Begin("Adjust Light | Settings", NULL, window_flags);
 		SetWindowPos(ImVec2(50, newLightSettingsWindowPosition.y + newLightSettingsWindowSize.y + 25));
 		SetWindowFontScale(1.25f);
-		float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
 
 		Text("Current Light:");
 		SameLine(0.0f, spacing);
 
-		if (ArrowButton("##left", ImGuiDir_Left)) 
+		PushButtonRepeat(true);
+		if (ArrowButton("#leftLightIndex", ImGuiDir_Left)) 
 		{ 
 			if (lightingSystem.lightPropertiesList.size() > 0)
 			{
@@ -597,7 +637,7 @@ int main()
 		Text("%d", currentLightIndex);
 		SameLine(0.0f, spacing);
 
-		if (ArrowButton("##right", ImGuiDir_Right)) 
+		if (ArrowButton("#rightLightIndex", ImGuiDir_Right)) 
 		{ 
 			if (lightingSystem.lightPropertiesList.size() > 0)
 			{
@@ -606,6 +646,7 @@ int main()
 				updateLightSettings = true;
 			}
 		}
+		PopButtonRepeat();
 
 		// Update Current Light Settings
 		if (updateLightSettings)
@@ -630,13 +671,13 @@ int main()
 
 		if (lightingSystem.lightPropertiesList.size() > 0)
 		{
-			InputFloat3("Light Position", lightPosition);
+			DragFloat3("Light Position", lightPosition);
 			ColorEdit3("Ambient Color", ambientColor);
 			ColorEdit3("Diffuse Color", diffuseColor);
-			InputFloat3("Specular", specular);
-			InputFloat("Constant", &constant);
-			InputFloat("Linear", &linear);
-			InputFloat("Quadratic", &quadratic);
+			DragFloat3("Specular", specular);
+			DragFloat("Constant", &constant);
+			DragFloat("Linear", &linear);
+			DragFloat("Quadratic", &quadratic);
 
 			lightingSystem.lightPropertiesList[currentLightIndex].position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
 			lightingSystem.lightPropertiesList[currentLightIndex].ambientColor = vec3(ambientColor[0], ambientColor[1], ambientColor[2]);
