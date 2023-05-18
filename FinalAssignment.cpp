@@ -20,13 +20,38 @@ using namespace glm;
 using namespace std;
 using namespace ImGui;
 
+double cursorX = -1, cursorY = -1, lastCursorX, lastCursorY;
 float cameraSensitivity = 15.0f;
 float cameraSpeed = 2.0f;
-vec3 cameraPosition(0, 0, -10), cameraForward(0, 0, 1), cameraUp(0, 1, 0);
+vec3 cameraPosition(0, 0, 10), cameraForward(0, 0, -1), cameraUp(0, 1, 0);
 bool showCursor = true;
+
+struct BoxInfo
+{
+	vec3 position;
+	float angleX;
+	float angleY;
+	bool autoRotation;
+};
+
+struct BoxSystem
+{
+	vector<BoxInfo> boxes;
+
+	void AddBox(const BoxInfo& box)
+	{
+		boxes.push_back(box);
+	}
+
+	void RemoveBox(int index)
+	{
+		boxes.erase(boxes.begin() + index);
+	}
+};
 
 struct LightInfo
 {
+	vec3 direction;
 	vec3 position;
 	vec3 ambientColor;
 	vec3 diffuseColor;
@@ -38,6 +63,7 @@ struct LightInfo
 
 struct LightPropertyNames
 {
+	const char* directionName;
 	const char* positionName;
 	const char* ambientName;
 	const char* diffuseName;
@@ -65,8 +91,10 @@ struct LightingSystem
 
 		for (int i = index; i < lightPropertiesList.size(); i++)
 		{
-			const char* str = "pointLights[%d].%s";
+			int newIndex = i - 1;
+			const char* str = "pointLights[%i].%s";
 
+			char* directionBuffer = (char*)malloc(50 * sizeof(char));
 			char* positionBuffer = (char*)malloc(50 * sizeof(char));
 			char* ambientBuffer = (char*)malloc(50 * sizeof(char));
 			char* diffuseBuffer = (char*)malloc(50 * sizeof(char));
@@ -75,19 +103,21 @@ struct LightingSystem
 			char* linearBuffer = (char*)malloc(50 * sizeof(char));
 			char* quadraticBuffer = (char*)malloc(50 * sizeof(char));
 
-			std::snprintf(positionBuffer, 50, str, i, "position");
+			std::snprintf(directionBuffer, 50, str, newIndex, "direction");
+			lightPropertyNamesList[i].directionName = directionBuffer;
+			std::snprintf(positionBuffer, 50, str, newIndex, "position");
 			lightPropertyNamesList[i].positionName = positionBuffer;
-			std::snprintf(ambientBuffer, 50, str, i, "ambientColor");
+			std::snprintf(ambientBuffer, 50, str, newIndex, "ambientColor");
 			lightPropertyNamesList[i].ambientName = ambientBuffer;
-			std::snprintf(diffuseBuffer, 50, str, i, "diffuseColor");
+			std::snprintf(diffuseBuffer, 50, str, newIndex, "diffuseColor");
 			lightPropertyNamesList[i].diffuseName = diffuseBuffer;
-			std::snprintf(specularBuffer, 50, str, i, "specular");
+			std::snprintf(specularBuffer, 50, str, newIndex, "specular");
 			lightPropertyNamesList[i].specularName = specularBuffer;
-			std::snprintf(constantBuffer, 50, str, i, "constant");
+			std::snprintf(constantBuffer, 50, str, newIndex, "constant");
 			lightPropertyNamesList[i].constantName = constantBuffer;
-			std::snprintf(linearBuffer, 50, str, i, "linear");
+			std::snprintf(linearBuffer, 50, str, newIndex, "linear");
 			lightPropertyNamesList[i].linearName = linearBuffer;
-			std::snprintf(quadraticBuffer, 50, str, i, "quadratic");
+			std::snprintf(quadraticBuffer, 50, str, newIndex, "quadratic");
 			lightPropertyNamesList[i].quadraticName = quadraticBuffer;
 		}
 	}
@@ -96,6 +126,7 @@ struct LightingSystem
 	{
 		for (int i = 0; i < lightPropertiesList.size(); i++)
 		{
+			int directionalLightDirection = glGetUniformLocation(shader, lightPropertyNamesList[i].directionName);
 			int pointLightPosition = glGetUniformLocation(shader, lightPropertyNamesList[i].positionName);
 			int pointLightAmbientColor = glGetUniformLocation(shader, lightPropertyNamesList[i].ambientName);
 			int pointLightDiffuseColor = glGetUniformLocation(shader, lightPropertyNamesList[i].diffuseName);
@@ -109,6 +140,7 @@ struct LightingSystem
 			glUniform3f(pointLightAmbientColor, lightPropertiesList[i].ambientColor.x, lightPropertiesList[i].ambientColor.y, lightPropertiesList[i].ambientColor.z);
 			glUniform3f(pointLightDiffuseColor, lightPropertiesList[i].diffuseColor.x, lightPropertiesList[i].diffuseColor.y, lightPropertiesList[i].diffuseColor.z);
 			glUniform3f(pointLightSpecular, lightPropertiesList[i].specular.x, lightPropertiesList[i].specular.y, lightPropertiesList[i].specular.z);
+			glUniform3f(directionalLightDirection, lightPropertiesList[i].direction.x, lightPropertiesList[i].direction.y, lightPropertiesList[i].direction.z);
 
 			glUniform1f(pointLightConstant, lightPropertiesList[i].constant);
 			glUniform1f(pointLightLinear, lightPropertiesList[i].linear);
@@ -118,15 +150,15 @@ struct LightingSystem
 };
 
 int Clamp(int value, int minVal, int maxVal) {
-	if (value < minVal) 
+	if (value < minVal)
 	{
 		return minVal;
 	}
-	else if (value > maxVal) 
+	else if (value > maxVal)
 	{
 		return maxVal;
 	}
-	else 
+	else
 	{
 		return value;
 	}
@@ -144,10 +176,14 @@ void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mod
 
 void HandleInput(GLFWwindow* window, float deltaTime) {
 	static bool w, s, a, d, space, ctrl;
-	static double cursorX = -1, cursorY = -1, lastCursorX, lastCursorY;
-	static float pitch, yaw;
+	static float pitch = 0, yaw = 180 * cameraForward.z;
 	float sensitivity = cameraSensitivity * deltaTime;
 	float speed = cameraSpeed * deltaTime;
+
+	lastCursorX = cursorX;
+	lastCursorY = cursorY;
+	glfwGetCursorPos(window, &cursorX, &cursorY);
+	glm::vec2 mouseDelta(cursorX - lastCursorX, cursorY - lastCursorY);
 
 	if (showCursor) return;
 
@@ -165,15 +201,7 @@ void HandleInput(GLFWwindow* window, float deltaTime) {
 	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) ctrl = true; // DOWN
 	else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE) ctrl = false;
 
-	if (cursorX == -1) {
-		glfwGetCursorPos(window, &cursorX, &cursorY);
-	}
-
-	lastCursorX = cursorX;
-	lastCursorY = cursorY;
-	glfwGetCursorPos(window, &cursorX, &cursorY);
-	glm::vec2 mouseDelta(cursorX - lastCursorX, cursorY - lastCursorY);
-	// TODO: calculate rotation & movement
+	// calculate rotation & movement
 	yaw -= mouseDelta.x * sensitivity;
 	pitch += mouseDelta.y * sensitivity;
 	if (pitch < -90.0f) pitch = -90.0f;
@@ -233,11 +261,25 @@ unsigned int LoadTexture(string url, GLenum format) {
 int main()
 {
 	LightingSystem lightingSystem;
+	BoxSystem boxSystem;
 
 	static double previousT = 0;
 	int currentLightIndex = 0;
+	int currentBoxIndex = 0;
 	bool updateLightSettings = false;
+	bool updateBoxSettings = false;
 
+	float boxPosition[3] = { 0.0f, 0.0f, 0.0f };
+	float boxXAngle = 0.0f;
+	float boxYAngle = 0.0f;
+	bool  boxAutoRotation = false;
+
+	float tempBoxPosition[3] = { 0.0f, 0.0f, 0.0f };
+	float tempBoxXAngle = 0.0f;
+	float tempBoxYAngle = 0.0f;
+	bool  tempBoxAutoRotation = false;
+
+	float lightDirection[3] = { 0.0f, 0.0f, 0.0f };
 	float lightPosition[3] = { 0.0f, 0.0f, 0.0f };
 	float ambientColor[3] = { 0.0f, 0.0f, 0.0f };
 	float diffuseColor[3] = { 0.0f, 0.0f, 0.0f };
@@ -246,6 +288,7 @@ int main()
 	float linear = 0.09f;
 	float quadratic = 0.032f;
 
+	float tempLightDirection[3] = { 0.0f, 0.0f, 0.0f };
 	float tempLightPosition[3] = { 0.0f, 0.0f, 0.0f };
 	float tempAmbientColor[3] = { 0.0f, 0.0f, 0.0f };
 	float tempDiffuseColor[3] = { 0.0f, 0.0f, 0.0f };
@@ -412,7 +455,6 @@ int main()
 	int projLoc = glGetUniformLocation(myProgram, "projection");
 	int camLoc = glGetUniformLocation(myProgram, "camera");
 	int numPointLightsLocation = glGetUniformLocation(myProgram, "numPointLights");
-	//int amountOfPointLights = glGetUniformLocation(myProgram, "nrOfPointLights");
 	/// END MATRIX SETUP ///
 	// OPENGL SETTINGS //
 	glEnable(GL_CULL_FACE);
@@ -441,12 +483,53 @@ int main()
 	crosshair_flags |= ImGuiWindowFlags_NoBackground;
 	crosshair_flags |= ImGuiWindowFlags_NoTitleBar;
 
+	// ADD DIRECTIONAL LIGHT //
+	// Set All Light Info
+	LightInfo lightInfo;
+	lightInfo.direction = vec3(lightDirection[0], lightDirection[1], lightDirection[2]);
+	lightInfo.position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
+	lightInfo.ambientColor = vec3(1, 1, 1);
+	lightInfo.diffuseColor = vec3(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
+	lightInfo.specular = vec3(specular[0], specular[1], specular[2]);
+	lightInfo.constant = constant;
+	lightInfo.linear = linear;
+	lightInfo.quadratic = quadratic;
+
+	// Set All Light Property Names
+	LightPropertyNames lightPropertyNames;
+	const char* str = "directionalLight.%s";
+
+	char* directionBuffer = (char*)malloc(50 * sizeof(char));
+	char* ambientBuffer = (char*)malloc(50 * sizeof(char));
+	char* diffuseBuffer = (char*)malloc(50 * sizeof(char));
+	char* specularBuffer = (char*)malloc(50 * sizeof(char));
+
+	std::snprintf(directionBuffer, 50, str, "direction");
+	lightPropertyNames.directionName = directionBuffer;
+	std::snprintf(ambientBuffer, 50, str, "ambientColor");
+	lightPropertyNames.ambientName = ambientBuffer;
+	std::snprintf(diffuseBuffer, 50, str, "diffuseColor");
+	lightPropertyNames.diffuseName = diffuseBuffer;
+	std::snprintf(specularBuffer, 50, str, "specular");
+	lightPropertyNames.positionName = "";
+	lightPropertyNames.specularName = specularBuffer;
+	lightPropertyNames.constantName = "";
+	lightPropertyNames.linearName = "";
+	lightPropertyNames.quadraticName = "";
+
+	lightingSystem.AddLight(lightInfo, lightPropertyNames);
+
+	updateLightSettings = true;
+	// END DIRECTIONAL LIGHT //
+
+	glEnable(GL_DEPTH_TEST);
+
 	while (!glfwWindowShouldClose(window)) {
 		double time = glfwGetTime();
 		float deltaTime = time - previousT;
 		previousT = time;
 		HandleInput(window, deltaTime);
-		float spacing = ImGui::GetStyle().ItemInnerSpacing.x;
+		float spacing = GetStyle().ItemInnerSpacing.x;
 
 		if (showCursor)
 		{
@@ -459,24 +542,21 @@ int main()
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 
-		glm::mat4 world = glm::mat4(1.f);
-		world = glm::rotate(world, glm::radians((float)time * 45.0f), glm::vec3(1, 1, 1));
-		world = glm::scale(world, glm::vec3(1, 1, 1));
-		world = glm::translate(world, glm::vec3(0, 0, 0));
+
 		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraForward, cameraUp);
-		glm::mat4 projection = glm::perspective(glm::radians(65.0f), mode->width / (float)mode->height, 0.0001f, 1000.0f);
-		glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
+		glm::mat4 projection = glm::perspective(glm::radians(65.0f), mode->width / (float)mode->height, 0.1f, 1000.0f);
+		//glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniform3fv(camLoc, 1, glm::value_ptr(cameraPosition));
-		glUniform1i(numPointLightsLocation, lightingSystem.lightPropertiesList.size());
+		glUniform1i(numPointLightsLocation, lightingSystem.lightPropertiesList.size() - 1);
 
 		glClearColor(0, 0, 0, 1.0f);
-		glClear(GL_COLOR_BUFFER_BIT);
+		glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
 		ImGui_ImplOpenGL3_NewFrame();
 		ImGui_ImplGlfw_NewFrame();
-		ImGui::NewFrame();
+		NewFrame();
 
 		// Activate the shader
 		glUseProgram(myProgram);
@@ -495,9 +575,29 @@ int main()
 		glBindTexture(GL_TEXTURE_2D, specularTexID);
 
 		glBindVertexArray(VAO);
-		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 
-		ImGuiStyle& style = ImGui::GetStyle();
+		// BOX OBJECTS //
+		for (int i = 0; i < boxSystem.boxes.size(); i++)
+		{
+			glm::mat4 world = glm::mat4(1.f);
+			world = glm::translate(world, glm::vec3(boxSystem.boxes[i].position[0], boxSystem.boxes[i].position[1], boxSystem.boxes[i].position[2]));
+			world = glm::rotate(world, glm::radians((boxSystem.boxes[i].autoRotation ? (float)time : 1.0f) * boxSystem.boxes[i].angleX), glm::vec3(1, 0, 0));
+			world = glm::rotate(world, glm::radians((boxSystem.boxes[i].autoRotation ? (float)time : 1.0f) * boxSystem.boxes[i].angleY), glm::vec3(0, 1, 0));
+			world = glm::scale(world, glm::vec3(1, 1, 1));
+			glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
+			glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
+		}
+		// END BOX OBJECTS //
+
+		// Floor //
+		glm::mat4 world = glm::mat4(1.f);
+		world = glm::translate(world, glm::vec3(0.0f, -5.0f, 0.0f));
+		world = glm::scale(world, glm::vec3(25, 1, 25));
+		glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
+		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
+		// END FLOOR //
+
+		ImGuiStyle& style = GetStyle();
 		style.FrameRounding = 3.0f;
 		style.WindowRounding = 3.0f;
 
@@ -555,11 +655,12 @@ int main()
 
 		if (Button("Add Light", ImVec2(260, 20)))
 		{
-			int index = lightingSystem.lightPropertiesList.size();
+			int index = lightingSystem.lightPropertiesList.size() - 1;
 
 			// Reset All Light Values
 			for (int i = 0; i < 3; i++)
 			{
+				lightDirection[i] = tempLightDirection[i];
 				lightPosition[i] = tempLightPosition[i];
 				ambientColor[i] = tempAmbientColor[i];
 				diffuseColor[i] = tempDiffuseColor[i];
@@ -572,6 +673,7 @@ int main()
 
 			// Set All Light Info
 			LightInfo lightInfo;
+			lightInfo.direction = vec3(lightDirection[0], lightDirection[1], lightDirection[2]);
 			lightInfo.position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
 			lightInfo.ambientColor = vec3(ambientColor[0], ambientColor[1], ambientColor[2]);
 			lightInfo.diffuseColor = vec3(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
@@ -584,14 +686,18 @@ int main()
 			LightPropertyNames lightPropertyNames;
 			const char* str = "pointLights[%d].%s";
 
+			char* directionBuffer = (char*)malloc(50 * sizeof(char));
 			char* positionBuffer = (char*)malloc(50 * sizeof(char));
-			char *ambientBuffer = (char*)malloc(50 * sizeof(char));
-			char *diffuseBuffer = (char*)malloc(50 * sizeof(char));
-			char *specularBuffer = (char*)malloc(50 * sizeof(char));
-			char *constantBuffer = (char*)malloc(50 * sizeof(char));
-			char *linearBuffer = (char*)malloc(50 * sizeof(char));
-			char *quadraticBuffer = (char*)malloc(50 * sizeof(char));
+			char* ambientBuffer = (char*)malloc(50 * sizeof(char));
+			char* diffuseBuffer = (char*)malloc(50 * sizeof(char));
+			char* specularBuffer = (char*)malloc(50 * sizeof(char));
+			char* constantBuffer = (char*)malloc(50 * sizeof(char));
+			char* linearBuffer = (char*)malloc(50 * sizeof(char));
+			char* quadraticBuffer = (char*)malloc(50 * sizeof(char));
 
+			std::snprintf(directionBuffer, 50, str, index, "direction");
+			lightPropertyNames.directionName = directionBuffer;
+			printf("Direction Name: %s \n", directionBuffer);
 			std::snprintf(positionBuffer, 50, str, index, "position");
 			lightPropertyNames.positionName = positionBuffer;
 			std::snprintf(ambientBuffer, 50, str, index, "ambientColor");
@@ -609,22 +715,50 @@ int main()
 
 			lightingSystem.AddLight(lightInfo, lightPropertyNames);
 
-			currentLightIndex = index;
+			currentLightIndex = index + 1;
 			updateLightSettings = true;
+		}
+
+		if (Button("Add Box", ImVec2(260, 20)))
+		{
+			int index = boxSystem.boxes.size();
+
+			// Reset All Light Values
+			for (int i = 0; i < 3; i++)
+			{
+				boxPosition[i] = tempBoxPosition[i];
+			}
+
+			boxXAngle = tempBoxXAngle;
+			boxYAngle = tempBoxYAngle;
+			boxAutoRotation = tempBoxAutoRotation;
+
+			BoxInfo boxInfo;
+			boxInfo.position = vec3(boxPosition[0], boxPosition[1], boxPosition[2]);
+			boxInfo.angleX = boxXAngle;
+			boxInfo.angleY = boxYAngle;
+			boxInfo.autoRotation = boxAutoRotation;
+
+			boxSystem.AddBox(boxInfo);
+
+			currentBoxIndex = index;
 		}
 
 		End();
 
 		Begin("Adjust Light | Settings", NULL, window_flags);
-		SetWindowPos(ImVec2(50, newLightSettingsWindowPosition.y + newLightSettingsWindowSize.y + 25));
+		ImVec2 adjustLightSettingsWindowSize = GetWindowSize();
+		ImVec2 adjustLightSettingsWindowPosition = ImVec2(50, newLightSettingsWindowPosition.y + newLightSettingsWindowSize.y + 25);
+		SetWindowPos(adjustLightSettingsWindowPosition);
 		SetWindowFontScale(1.25f);
 
+		Text(currentLightIndex == 0 ? "Directional Light" : "Spot Light");
 		Text("Current Light:");
 		SameLine(0.0f, spacing);
 
 		PushButtonRepeat(true);
-		if (ArrowButton("#leftLightIndex", ImGuiDir_Left)) 
-		{ 
+		if (ArrowButton("#leftLightIndex", ImGuiDir_Left))
+		{
 			if (lightingSystem.lightPropertiesList.size() > 0)
 			{
 				currentLightIndex--;
@@ -637,8 +771,8 @@ int main()
 		Text("%d", currentLightIndex);
 		SameLine(0.0f, spacing);
 
-		if (ArrowButton("#rightLightIndex", ImGuiDir_Right)) 
-		{ 
+		if (ArrowButton("#rightLightIndex", ImGuiDir_Right))
+		{
 			if (lightingSystem.lightPropertiesList.size() > 0)
 			{
 				currentLightIndex++;
@@ -671,14 +805,20 @@ int main()
 
 		if (lightingSystem.lightPropertiesList.size() > 0)
 		{
-			DragFloat3("Light Position", lightPosition);
+			if (currentLightIndex == 0) DragFloat3("Light Direction", lightDirection);
+			if (currentLightIndex != 0) DragFloat3("Light Position", lightPosition);
 			ColorEdit3("Ambient Color", ambientColor);
 			ColorEdit3("Diffuse Color", diffuseColor);
 			DragFloat3("Specular", specular);
-			DragFloat("Constant", &constant);
-			DragFloat("Linear", &linear);
-			DragFloat("Quadratic", &quadratic);
 
+			if (currentLightIndex != 0)
+			{
+				DragFloat("Constant", &constant);
+				DragFloat("Linear", &linear);
+				DragFloat("Quadratic", &quadratic);
+			}
+
+			lightingSystem.lightPropertiesList[currentLightIndex].direction = vec3(lightDirection[0], lightDirection[1], lightDirection[2]);
 			lightingSystem.lightPropertiesList[currentLightIndex].position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
 			lightingSystem.lightPropertiesList[currentLightIndex].ambientColor = vec3(ambientColor[0], ambientColor[1], ambientColor[2]);
 			lightingSystem.lightPropertiesList[currentLightIndex].diffuseColor = vec3(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
@@ -687,11 +827,89 @@ int main()
 			lightingSystem.lightPropertiesList[currentLightIndex].linear = linear;
 			lightingSystem.lightPropertiesList[currentLightIndex].quadratic = quadratic;
 
-			if (Button("Remove Light", ImVec2(260, 20)))
+			if (currentLightIndex != 0)
 			{
-				lightingSystem.RemoveLight(currentLightIndex);
-				if (currentLightIndex > 0) currentLightIndex--;
-				updateLightSettings = true;
+				if (Button("Remove Light", ImVec2(260, 20)))
+				{
+					lightingSystem.RemoveLight(currentLightIndex);
+					if (currentLightIndex > 0) currentLightIndex--;
+					updateLightSettings = true;
+				}
+			}
+		}
+
+		End();
+
+		Begin("Adjust Box | Settings", NULL, window_flags);
+		ImVec2 adjustBoxSettingsWindowSize = GetWindowSize();
+		ImVec2 adjustBoxSettingsWindowPosition = ImVec2(50, adjustLightSettingsWindowPosition.y + adjustLightSettingsWindowSize.y + 25);
+		SetWindowPos(adjustBoxSettingsWindowPosition);
+		SetWindowFontScale(1.25f);
+
+		Text("Current Box:");
+		SameLine(0.0f, spacing);
+
+		PushButtonRepeat(true);
+		if (ArrowButton("#leftBoxIndex", ImGuiDir_Left))
+		{
+			if (boxSystem.boxes.size() > 0)
+			{
+				currentBoxIndex--;
+				currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
+				updateBoxSettings = true;
+			}
+		}
+
+		SameLine(0.0f, spacing);
+		Text("%d", currentBoxIndex);
+		SameLine(0.0f, spacing);
+
+		if (ArrowButton("#rightBoxIndex", ImGuiDir_Right))
+		{
+			if (boxSystem.boxes.size() > 0)
+			{
+				currentBoxIndex++;
+				currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
+				updateBoxSettings = true;
+			}
+		}
+		PopButtonRepeat();
+
+		// Update Current Box Settings
+		if (updateBoxSettings)
+		{
+			if (boxSystem.boxes.size() > 0)
+			{
+				for (int i = 0; i < 3; i++)
+				{
+					boxPosition[i] = boxSystem.boxes[currentBoxIndex].position[i];
+				}
+
+				boxXAngle = boxSystem.boxes[currentBoxIndex].angleX;
+				boxYAngle = boxSystem.boxes[currentBoxIndex].angleY;
+				boxAutoRotation = boxSystem.boxes[currentBoxIndex].autoRotation;
+			}
+
+			updateBoxSettings = false;
+		}
+
+		if (boxSystem.boxes.size() > 0)
+		{
+			DragFloat3("Box Position", boxPosition);
+			DragFloat("Box X Rotation", &boxXAngle);
+			DragFloat("Box Y Rotation", &boxYAngle);
+			Checkbox("Box Auto Rotation", &boxAutoRotation);
+
+			boxSystem.boxes[currentBoxIndex].position = vec3(boxPosition[0], boxPosition[1], boxPosition[2]);
+			boxSystem.boxes[currentBoxIndex].angleX = boxXAngle;
+			boxSystem.boxes[currentBoxIndex].angleY = boxYAngle;
+			boxSystem.boxes[currentBoxIndex].autoRotation = boxAutoRotation;
+
+			if (Button("Remove Box", ImVec2(260, 20)))
+			{
+				boxSystem.RemoveBox(currentBoxIndex);
+				if (currentBoxIndex > 0) currentBoxIndex--;
+				updateBoxSettings = true;
 			}
 		}
 

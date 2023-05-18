@@ -8,6 +8,7 @@ in vec4 fragPos; // FragPos
 in vec3 camPos;
 
 struct PointLight {
+	vec3 direction;
 	vec3 position;
 
 	vec3 ambientColor;
@@ -28,8 +29,24 @@ struct Material {
 #define MAX_POINT_LIGHTS 100
 uniform int numPointLights;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
+uniform PointLight directionalLight;
 //uniform PointLight pointLight;
 uniform Material material;
+
+vec3 CalcDirectionalLight(PointLight _light, vec3 _normal, vec3 _viewDir)
+{
+	vec3 lightDir = normalize(-_light.direction);
+	// diffuse shading
+	float diff = max(dot(_normal, lightDir), 0.0);
+	// specular shading
+	vec3 reflectDir = reflect(-lightDir, _normal);
+	float spec = pow(max(dot(_viewDir, reflectDir), 0.0), material.shininess);
+	// combine results
+	vec3 ambient = _light.ambientColor * vec3(texture(material.diffuseSample, uv));
+	vec3 diffuse = _light.diffuseColor * diff * vec3(texture(material.diffuseSample, uv));
+	vec3 specular = _light.specular * spec * vec3(texture(material.specular, uv));
+	return (ambient + diffuse + specular);
+}
 
 vec3 CalcPointLight(PointLight _light, vec3 _normal, vec3 _fragPos, vec3 _viewDir)
 {
@@ -56,7 +73,7 @@ void main() {
 	vec3 norm = normalize(normal);
 	vec3 viewDir = normalize(camPos - fragPos.xyz);
 
-	vec3 result = vec3(0.0f);
+	vec3 result = CalcDirectionalLight(directionalLight, norm, viewDir);
 
 	for (int i = 0; i < numPointLights; i++)
 	{
