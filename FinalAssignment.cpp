@@ -28,10 +28,10 @@ bool showCursor = true;
 
 struct BoxInfo
 {
-	vec3 position;
-	float angleX;
-	float angleY;
-	bool autoRotation;
+	vec3 position = vec3(0.0f);
+	float angleX = 0.0f;
+	float angleY = 0.0f;
+	bool autoRotation = false;
 };
 
 struct BoxSystem
@@ -51,14 +51,14 @@ struct BoxSystem
 
 struct LightInfo
 {
-	vec3 direction;
-	vec3 position;
-	vec3 ambientColor;
-	vec3 diffuseColor;
-	vec3 specular;
-	float constant;
-	float linear;
-	float quadratic;
+	vec3 direction = vec3(0.0f);
+	vec3 position = vec3(0.0f);
+	vec3 ambientColor = vec3(0.0f);
+	vec3 diffuseColor = vec3(0.0f);
+	vec3 specular = vec3(1.0f);
+	float constant = 1.0f;
+	float linear = 0.09f;
+	float quadratic = 0.032f;
 };
 
 struct LightPropertyNames
@@ -262,40 +262,14 @@ int main()
 {
 	LightingSystem lightingSystem;
 	BoxSystem boxSystem;
+	BoxInfo currentBoxInfo;
+	LightInfo currentLightInfo;
 
 	static double previousT = 0;
 	int currentLightIndex = 0;
 	int currentBoxIndex = 0;
 	bool updateLightSettings = false;
 	bool updateBoxSettings = false;
-
-	float boxPosition[3] = { 0.0f, 0.0f, 0.0f };
-	float boxXAngle = 0.0f;
-	float boxYAngle = 0.0f;
-	bool  boxAutoRotation = false;
-
-	float tempBoxPosition[3] = { 0.0f, 0.0f, 0.0f };
-	float tempBoxXAngle = 0.0f;
-	float tempBoxYAngle = 0.0f;
-	bool  tempBoxAutoRotation = false;
-
-	float lightDirection[3] = { 0.0f, 0.0f, 0.0f };
-	float lightPosition[3] = { 0.0f, 0.0f, 0.0f };
-	float ambientColor[3] = { 0.0f, 0.0f, 0.0f };
-	float diffuseColor[3] = { 0.0f, 0.0f, 0.0f };
-	float specular[3] = { 1.0f, 1.0f, 1.0f };
-	float constant = 1.0f;
-	float linear = 0.09f;
-	float quadratic = 0.032f;
-
-	float tempLightDirection[3] = { 0.0f, 0.0f, 0.0f };
-	float tempLightPosition[3] = { 0.0f, 0.0f, 0.0f };
-	float tempAmbientColor[3] = { 0.0f, 0.0f, 0.0f };
-	float tempDiffuseColor[3] = { 0.0f, 0.0f, 0.0f };
-	float tempSpecular[3] = { 1.0f, 1.0f, 1.0f };
-	float tempConstant = 1.0f;
-	float tempLinear = 0.09f;
-	float tempQuadratic = 0.032f;
 
 	// GLFW Setup //
 	glfwInit();
@@ -391,19 +365,16 @@ int main()
 	glBindBuffer(GL_ARRAY_BUFFER, VBO);
 	glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, EBO);
-	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices,
-		GL_STATIC_DRAW);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
 	int stride = sizeof(float) * 11;
 	// position
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, stride, 0);
 	glEnableVertexAttribArray(0);
 	// uv
-	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) *
-		6));
+	glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * 6));
 	glEnableVertexAttribArray(1);
 	// normal
-	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) *
-		8));
+	glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, stride, (void*)(sizeof(float) * 8));
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
@@ -430,16 +401,14 @@ int main()
 	if (!success)
 	{
 		glGetShaderInfoLog(vertID, 512, NULL, infoLog);
-		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog <<
-			endl;
+		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << endl;
 	};
 	glCompileShader(fragID);
 	glGetShaderiv(fragID, GL_COMPILE_STATUS, &success);
 	if (!success)
 	{
 		glGetShaderInfoLog(fragID, 512, NULL, infoLog);
-		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog <<
-			endl;
+		cout << "ERROR::SHADER::VERTEX::COMPILATION_FAILED\n" << infoLog << endl;
 	};
 	unsigned int myProgram = glCreateProgram();
 	glAttachShader(myProgram, vertID);
@@ -454,6 +423,7 @@ int main()
 	int viewLoc = glGetUniformLocation(myProgram, "view");
 	int projLoc = glGetUniformLocation(myProgram, "projection");
 	int camLoc = glGetUniformLocation(myProgram, "camera");
+	int cubeColorLoc = glGetUniformLocation(myProgram, "cubeColor");
 	int numPointLightsLocation = glGetUniformLocation(myProgram, "numPointLights");
 	/// END MATRIX SETUP ///
 	// OPENGL SETTINGS //
@@ -485,18 +455,11 @@ int main()
 
 	// ADD DIRECTIONAL LIGHT //
 	// Set All Light Info
-	LightInfo lightInfo;
-	lightInfo.direction = vec3(lightDirection[0], lightDirection[1], lightDirection[2]);
-	lightInfo.position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
-	lightInfo.ambientColor = vec3(1, 1, 1);
-	lightInfo.diffuseColor = vec3(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
-	lightInfo.specular = vec3(specular[0], specular[1], specular[2]);
-	lightInfo.constant = constant;
-	lightInfo.linear = linear;
-	lightInfo.quadratic = quadratic;
+	LightInfo directionalLightInfo;
+	directionalLightInfo.ambientColor = vec3(1.0f);
 
 	// Set All Light Property Names
-	LightPropertyNames lightPropertyNames;
+	LightPropertyNames directionalLightPropertyNames;
 	const char* str = "directionalLight.%s";
 
 	char* directionBuffer = (char*)malloc(50 * sizeof(char));
@@ -505,19 +468,19 @@ int main()
 	char* specularBuffer = (char*)malloc(50 * sizeof(char));
 
 	std::snprintf(directionBuffer, 50, str, "direction");
-	lightPropertyNames.directionName = directionBuffer;
+	directionalLightPropertyNames.directionName = directionBuffer;
 	std::snprintf(ambientBuffer, 50, str, "ambientColor");
-	lightPropertyNames.ambientName = ambientBuffer;
+	directionalLightPropertyNames.ambientName = ambientBuffer;
 	std::snprintf(diffuseBuffer, 50, str, "diffuseColor");
-	lightPropertyNames.diffuseName = diffuseBuffer;
+	directionalLightPropertyNames.diffuseName = diffuseBuffer;
 	std::snprintf(specularBuffer, 50, str, "specular");
-	lightPropertyNames.positionName = "";
-	lightPropertyNames.specularName = specularBuffer;
-	lightPropertyNames.constantName = "";
-	lightPropertyNames.linearName = "";
-	lightPropertyNames.quadraticName = "";
+	directionalLightPropertyNames.positionName = "";
+	directionalLightPropertyNames.specularName = specularBuffer;
+	directionalLightPropertyNames.constantName = "";
+	directionalLightPropertyNames.linearName = "";
+	directionalLightPropertyNames.quadraticName = "";
 
-	lightingSystem.AddLight(lightInfo, lightPropertyNames);
+	lightingSystem.AddLight(directionalLightInfo, directionalLightPropertyNames);
 
 	updateLightSettings = true;
 	// END DIRECTIONAL LIGHT //
@@ -529,6 +492,7 @@ int main()
 		float deltaTime = time - previousT;
 		previousT = time;
 		HandleInput(window, deltaTime);
+
 		float spacing = GetStyle().ItemInnerSpacing.x;
 
 		if (showCursor)
@@ -542,10 +506,8 @@ int main()
 			glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 		}
 
-
 		glm::mat4 view = glm::lookAt(cameraPosition, cameraPosition + cameraForward, cameraUp);
 		glm::mat4 projection = glm::perspective(glm::radians(65.0f), mode->width / (float)mode->height, 0.1f, 1000.0f);
-		//glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
 		glUniformMatrix4fv(viewLoc, 1, GL_FALSE, glm::value_ptr(view));
 		glUniformMatrix4fv(projLoc, 1, GL_FALSE, glm::value_ptr(projection));
 		glUniform3fv(camLoc, 1, glm::value_ptr(cameraPosition));
@@ -576,26 +538,42 @@ int main()
 
 		glBindVertexArray(VAO);
 
-		// BOX OBJECTS //
+		// OBJECTS //
+		// BOXES //
 		for (int i = 0; i < boxSystem.boxes.size(); i++)
 		{
 			glm::mat4 world = glm::mat4(1.f);
-			world = glm::translate(world, glm::vec3(boxSystem.boxes[i].position[0], boxSystem.boxes[i].position[1], boxSystem.boxes[i].position[2]));
+			world = glm::translate(world, boxSystem.boxes[i].position);
 			world = glm::rotate(world, glm::radians((boxSystem.boxes[i].autoRotation ? (float)time : 1.0f) * boxSystem.boxes[i].angleX), glm::vec3(1, 0, 0));
 			world = glm::rotate(world, glm::radians((boxSystem.boxes[i].autoRotation ? (float)time : 1.0f) * boxSystem.boxes[i].angleY), glm::vec3(0, 1, 0));
-			world = glm::scale(world, glm::vec3(1, 1, 1));
+			world = glm::scale(world, glm::vec3(1.0f));
 			glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
+			glUniform3fv(cubeColorLoc, 1, glm::value_ptr(vec3(-1.0f)));
 			glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 		}
-		// END BOX OBJECTS //
 
-		// Floor //
+		// FLOOR //
 		glm::mat4 world = glm::mat4(1.f);
 		world = glm::translate(world, glm::vec3(0.0f, -5.0f, 0.0f));
 		world = glm::scale(world, glm::vec3(25, 1, 25));
 		glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
+		glUniform3fv(cubeColorLoc, 1, glm::value_ptr(vec3(-1.0f)));
 		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
-		// END FLOOR //
+
+		// LIGHT CUBES //
+		if (lightingSystem.lightPropertiesList.size() > 1)
+		{
+			for (int i = 1; i < lightingSystem.lightPropertiesList.size(); i++)
+			{
+				glm::mat4 world = glm::mat4(1.f);
+				world = glm::translate(world, glm::vec3(lightingSystem.lightPropertiesList[i].position[0], lightingSystem.lightPropertiesList[i].position[1], lightingSystem.lightPropertiesList[i].position[2]));
+				world = glm::scale(world, glm::vec3(0.25f, 0.25f, 0.25f));
+				glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
+				glUniform3fv(cubeColorLoc, 1, glm::value_ptr(lightingSystem.lightPropertiesList[i].diffuseColor));
+				glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
+			}
+		}
+		// END OBJECTS //
 
 		ImGuiStyle& style = GetStyle();
 		style.FrameRounding = 3.0f;
@@ -657,30 +635,7 @@ int main()
 		{
 			int index = lightingSystem.lightPropertiesList.size() - 1;
 
-			// Reset All Light Values
-			for (int i = 0; i < 3; i++)
-			{
-				lightDirection[i] = tempLightDirection[i];
-				lightPosition[i] = tempLightPosition[i];
-				ambientColor[i] = tempAmbientColor[i];
-				diffuseColor[i] = tempDiffuseColor[i];
-				specular[i] = tempSpecular[i];
-			}
-
-			constant = tempConstant;
-			linear = tempLinear;
-			quadratic = tempQuadratic;
-
-			// Set All Light Info
-			LightInfo lightInfo;
-			lightInfo.direction = vec3(lightDirection[0], lightDirection[1], lightDirection[2]);
-			lightInfo.position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
-			lightInfo.ambientColor = vec3(ambientColor[0], ambientColor[1], ambientColor[2]);
-			lightInfo.diffuseColor = vec3(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
-			lightInfo.specular = vec3(specular[0], specular[1], specular[2]);
-			lightInfo.constant = constant;
-			lightInfo.linear = linear;
-			lightInfo.quadratic = quadratic;
+			currentLightInfo = LightInfo();
 
 			// Set All Light Property Names
 			LightPropertyNames lightPropertyNames;
@@ -697,7 +652,6 @@ int main()
 
 			std::snprintf(directionBuffer, 50, str, index, "direction");
 			lightPropertyNames.directionName = directionBuffer;
-			printf("Direction Name: %s \n", directionBuffer);
 			std::snprintf(positionBuffer, 50, str, index, "position");
 			lightPropertyNames.positionName = positionBuffer;
 			std::snprintf(ambientBuffer, 50, str, index, "ambientColor");
@@ -713,7 +667,7 @@ int main()
 			std::snprintf(quadraticBuffer, 50, str, index, "quadratic");
 			lightPropertyNames.quadraticName = quadraticBuffer;
 
-			lightingSystem.AddLight(lightInfo, lightPropertyNames);
+			lightingSystem.AddLight(currentLightInfo, lightPropertyNames);
 
 			currentLightIndex = index + 1;
 			updateLightSettings = true;
@@ -723,23 +677,9 @@ int main()
 		{
 			int index = boxSystem.boxes.size();
 
-			// Reset All Light Values
-			for (int i = 0; i < 3; i++)
-			{
-				boxPosition[i] = tempBoxPosition[i];
-			}
+			currentBoxInfo = BoxInfo();
 
-			boxXAngle = tempBoxXAngle;
-			boxYAngle = tempBoxYAngle;
-			boxAutoRotation = tempBoxAutoRotation;
-
-			BoxInfo boxInfo;
-			boxInfo.position = vec3(boxPosition[0], boxPosition[1], boxPosition[2]);
-			boxInfo.angleX = boxXAngle;
-			boxInfo.angleY = boxYAngle;
-			boxInfo.autoRotation = boxAutoRotation;
-
-			boxSystem.AddBox(boxInfo);
+			boxSystem.AddBox(currentBoxInfo);
 
 			currentBoxIndex = index;
 		}
@@ -787,17 +727,7 @@ int main()
 		{
 			if (lightingSystem.lightPropertiesList.size() > 0)
 			{
-				for (int i = 0; i < 3; i++)
-				{
-					lightPosition[i] = lightingSystem.lightPropertiesList[currentLightIndex].position[i];
-					ambientColor[i] = lightingSystem.lightPropertiesList[currentLightIndex].ambientColor[i];
-					diffuseColor[i] = lightingSystem.lightPropertiesList[currentLightIndex].diffuseColor[i];
-					specular[i] = lightingSystem.lightPropertiesList[currentLightIndex].specular[i];
-				}
-
-				constant = lightingSystem.lightPropertiesList[currentLightIndex].constant;
-				linear = lightingSystem.lightPropertiesList[currentLightIndex].linear;
-				quadratic = lightingSystem.lightPropertiesList[currentLightIndex].quadratic;
+				currentLightInfo = lightingSystem.lightPropertiesList[currentLightIndex];
 			}
 
 			updateLightSettings = false;
@@ -805,27 +735,20 @@ int main()
 
 		if (lightingSystem.lightPropertiesList.size() > 0)
 		{
-			if (currentLightIndex == 0) DragFloat3("Light Direction", lightDirection);
-			if (currentLightIndex != 0) DragFloat3("Light Position", lightPosition);
-			ColorEdit3("Ambient Color", ambientColor);
-			ColorEdit3("Diffuse Color", diffuseColor);
-			DragFloat3("Specular", specular);
+			if (currentLightIndex == 0) DragFloat3("Light Direction", value_ptr(currentLightInfo.direction));
+			if (currentLightIndex != 0) DragFloat3("Light Position", value_ptr(currentLightInfo.position));
+			ColorEdit3("Ambient Color", value_ptr(currentLightInfo.ambientColor));
+			ColorEdit3("Diffuse Color", value_ptr(currentLightInfo.diffuseColor));
+			DragFloat3("Specular", value_ptr(currentLightInfo.specular));
 
 			if (currentLightIndex != 0)
 			{
-				DragFloat("Constant", &constant);
-				DragFloat("Linear", &linear);
-				DragFloat("Quadratic", &quadratic);
+				DragFloat("Constant", &currentLightInfo.constant);
+				DragFloat("Linear", &currentLightInfo.linear);
+				DragFloat("Quadratic", &currentLightInfo.quadratic);
 			}
 
-			lightingSystem.lightPropertiesList[currentLightIndex].direction = vec3(lightDirection[0], lightDirection[1], lightDirection[2]);
-			lightingSystem.lightPropertiesList[currentLightIndex].position = vec3(lightPosition[0], lightPosition[1], lightPosition[2]);
-			lightingSystem.lightPropertiesList[currentLightIndex].ambientColor = vec3(ambientColor[0], ambientColor[1], ambientColor[2]);
-			lightingSystem.lightPropertiesList[currentLightIndex].diffuseColor = vec3(diffuseColor[0], diffuseColor[1], diffuseColor[2]);
-			lightingSystem.lightPropertiesList[currentLightIndex].specular = vec3(specular[0], specular[1], specular[2]);
-			lightingSystem.lightPropertiesList[currentLightIndex].constant = constant;
-			lightingSystem.lightPropertiesList[currentLightIndex].linear = linear;
-			lightingSystem.lightPropertiesList[currentLightIndex].quadratic = quadratic;
+			lightingSystem.lightPropertiesList[currentLightIndex] = currentLightInfo;
 
 			if (currentLightIndex != 0)
 			{
@@ -880,14 +803,7 @@ int main()
 		{
 			if (boxSystem.boxes.size() > 0)
 			{
-				for (int i = 0; i < 3; i++)
-				{
-					boxPosition[i] = boxSystem.boxes[currentBoxIndex].position[i];
-				}
-
-				boxXAngle = boxSystem.boxes[currentBoxIndex].angleX;
-				boxYAngle = boxSystem.boxes[currentBoxIndex].angleY;
-				boxAutoRotation = boxSystem.boxes[currentBoxIndex].autoRotation;
+				currentBoxInfo = boxSystem.boxes[currentBoxIndex];
 			}
 
 			updateBoxSettings = false;
@@ -895,15 +811,12 @@ int main()
 
 		if (boxSystem.boxes.size() > 0)
 		{
-			DragFloat3("Box Position", boxPosition);
-			DragFloat("Box X Rotation", &boxXAngle);
-			DragFloat("Box Y Rotation", &boxYAngle);
-			Checkbox("Box Auto Rotation", &boxAutoRotation);
+			DragFloat3("Box Position", value_ptr(currentBoxInfo.position));
+			DragFloat("Box X Rotation", &currentBoxInfo.angleX);
+			DragFloat("Box Y Rotation", &currentBoxInfo.angleY);
+			Checkbox("Box Auto Rotation", &currentBoxInfo.autoRotation);
 
-			boxSystem.boxes[currentBoxIndex].position = vec3(boxPosition[0], boxPosition[1], boxPosition[2]);
-			boxSystem.boxes[currentBoxIndex].angleX = boxXAngle;
-			boxSystem.boxes[currentBoxIndex].angleY = boxYAngle;
-			boxSystem.boxes[currentBoxIndex].autoRotation = boxAutoRotation;
+			boxSystem.boxes[currentBoxIndex] = currentBoxInfo;
 
 			if (Button("Remove Box", ImVec2(260, 20)))
 			{

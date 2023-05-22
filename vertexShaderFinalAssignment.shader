@@ -5,12 +5,13 @@ layout(location = 1) in vec2 vUV;
 layout(location = 2) in vec3 vNormal;
 
 uniform mat4 world, view, projection;
-uniform vec3 camera;
+uniform vec3 camera, cubeColor;
 
 out vec2 uv;
 out vec3 normal;
 out vec4 fragPos;
 out vec3 camPos;
+out vec3 cubeLightColor;
 
 void main() {
 	//mat4 trs = world * view * projection;
@@ -19,4 +20,5 @@ void main() {
 	uv = vUV;
 	normal = mat3(world) * vNormal;
 	camPos = camera;
+	cubeLightColor = cubeColor;
 }

@@ -4,8 +4,9 @@ out vec4 FragColor;
 
 in vec2 uv;
 in vec3 normal;
-in vec4 fragPos; // FragPos
+in vec4 fragPos;
 in vec3 camPos;
+in vec3 cubeLightColor;
 
 struct PointLight {
 	vec3 direction;
@@ -30,7 +31,6 @@ struct Material {
 uniform int numPointLights;
 uniform PointLight pointLights[MAX_POINT_LIGHTS];
 uniform PointLight directionalLight;
-//uniform PointLight pointLight;
 uniform Material material;
 
 vec3 CalcDirectionalLight(PointLight _light, vec3 _normal, vec3 _viewDir)
@@ -80,7 +80,14 @@ void main() {
 		result += CalcPointLight(pointLights[i], normal, fragPos.xyz, viewDir);
 	}
 
-	FragColor = vec4(result, 1.0f);
+	if (cubeLightColor == vec3(-1.0f))
+	{
+		FragColor = vec4(result, 1.0f);
+	}
+	else
+	{
+		FragColor = vec4(cubeLightColor, 1.0f);
+	}
 
 	//vec3 lightDir = normalize(pointLight.position);
 	//float diff = max(dot(normal, -lightDir), 0.0f);
