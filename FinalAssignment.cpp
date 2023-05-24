@@ -20,11 +20,21 @@ using namespace glm;
 using namespace std;
 using namespace ImGui;
 
+// Camera & Mouse Settings
 double cursorX = -1, cursorY = -1, lastCursorX, lastCursorY;
 float cameraSensitivity = 15.0f;
 float cameraSpeed = 2.0f;
 vec3 cameraPosition(0, 0, 10), cameraForward(0, 0, -1), cameraUp(0, 1, 0);
 bool showCursor = true;
+
+// Time Settings
+double previousT = 0;
+
+// Objects & Light Settings
+int currentLightIndex = 0;
+int currentBoxIndex = 0;
+bool updateLightSettings = true;
+bool updateBoxSettings = false;
 
 struct BoxInfo
 {
@@ -63,15 +73,15 @@ struct LightInfo
 
 struct LightPropertyNames
 {
-	const char* directionName;
-	const char* positionName;
-	const char* ambientName;
-	const char* diffuseName;
-	const char* specularName;
+	string directionName;
+	string positionName;
+	string ambientName;
+	string diffuseName;
+	string specularName;
 
-	const char* constantName;
-	const char* linearName;
-	const char* quadraticName;
+	string constantName;
+	string linearName;
+	string quadraticName;
 };
 
 struct LightingSystem
@@ -79,62 +89,80 @@ struct LightingSystem
 	vector<LightInfo> lightPropertiesList;
 	vector<LightPropertyNames> lightPropertyNamesList;
 
-	void AddLight(const LightInfo& light, const LightPropertyNames& names) {
-		lightPropertiesList.push_back(light);
-		lightPropertyNamesList.push_back(names);
+	void AddLight(int _index, LightInfo _currentLightInfo) {
+		// Empty LightInfo
+		LightInfo lightInfo;
+
+		// Set All Light Property Names
+		LightPropertyNames lightPropertyNames;
+
+		lightPropertyNames.directionName = "pointLights[" + std::to_string(_index) + "].direction";
+		lightPropertyNames.positionName = "pointLights[" + std::to_string(_index) + "].position";
+		lightPropertyNames.ambientName = "pointLights[" + std::to_string(_index) + "].ambientColor";
+		lightPropertyNames.diffuseName = "pointLights[" + std::to_string(_index) + "].diffuseColor";
+		lightPropertyNames.specularName = "pointLights[" + std::to_string(_index) + "].specular";
+		lightPropertyNames.constantName = "pointLights[" + std::to_string(_index) + "].constant";
+		lightPropertyNames.linearName = "pointLights[" + std::to_string(_index) + "].linear";
+		lightPropertyNames.quadraticName = "pointLights[" + std::to_string(_index) + "].quadratic";
+
+		lightPropertiesList.push_back(lightInfo);
+		lightPropertyNamesList.push_back(lightPropertyNames);
+
+		currentLightIndex = lightPropertiesList.size() - 1;
+		_currentLightInfo = lightInfo;
+		updateLightSettings = true;
 	}
 
-	void RemoveLight(int index)
+	void AddDirectionalLight()
 	{
-		lightPropertiesList.erase(lightPropertiesList.begin() + index);
-		lightPropertyNamesList.erase(lightPropertyNamesList.begin() + index);
+		LightInfo directionalLightInfo;
+		LightPropertyNames directionalLightPropertyNames;	
 
-		for (int i = index; i < lightPropertiesList.size(); i++)
+		directionalLightInfo.ambientColor = vec3(1.0f);
+
+		directionalLightPropertyNames.directionName = "directionalLight.direction";
+		directionalLightPropertyNames.ambientName = "directionalLight.ambientColor";
+		directionalLightPropertyNames.diffuseName = "directionalLight.diffuseColor";
+		directionalLightPropertyNames.specularName = "directionalLight.specular";
+
+		lightPropertiesList.push_back(directionalLightInfo);
+		lightPropertyNamesList.push_back(directionalLightPropertyNames);
+	}
+
+	void RemoveLight(int _index)
+	{
+		lightPropertiesList.erase(lightPropertiesList.begin() + _index);
+		lightPropertyNamesList.erase(lightPropertyNamesList.begin() + _index);
+
+		for (int i = _index; i < lightPropertiesList.size(); i++)
 		{
 			int newIndex = i - 1;
 			const char* str = "pointLights[%i].%s";
 
-			char* directionBuffer = (char*)malloc(50 * sizeof(char));
-			char* positionBuffer = (char*)malloc(50 * sizeof(char));
-			char* ambientBuffer = (char*)malloc(50 * sizeof(char));
-			char* diffuseBuffer = (char*)malloc(50 * sizeof(char));
-			char* specularBuffer = (char*)malloc(50 * sizeof(char));
-			char* constantBuffer = (char*)malloc(50 * sizeof(char));
-			char* linearBuffer = (char*)malloc(50 * sizeof(char));
-			char* quadraticBuffer = (char*)malloc(50 * sizeof(char));
-
-			std::snprintf(directionBuffer, 50, str, newIndex, "direction");
-			lightPropertyNamesList[i].directionName = directionBuffer;
-			std::snprintf(positionBuffer, 50, str, newIndex, "position");
-			lightPropertyNamesList[i].positionName = positionBuffer;
-			std::snprintf(ambientBuffer, 50, str, newIndex, "ambientColor");
-			lightPropertyNamesList[i].ambientName = ambientBuffer;
-			std::snprintf(diffuseBuffer, 50, str, newIndex, "diffuseColor");
-			lightPropertyNamesList[i].diffuseName = diffuseBuffer;
-			std::snprintf(specularBuffer, 50, str, newIndex, "specular");
-			lightPropertyNamesList[i].specularName = specularBuffer;
-			std::snprintf(constantBuffer, 50, str, newIndex, "constant");
-			lightPropertyNamesList[i].constantName = constantBuffer;
-			std::snprintf(linearBuffer, 50, str, newIndex, "linear");
-			lightPropertyNamesList[i].linearName = linearBuffer;
-			std::snprintf(quadraticBuffer, 50, str, newIndex, "quadratic");
-			lightPropertyNamesList[i].quadraticName = quadraticBuffer;
+			lightPropertyNamesList[i].directionName = "pointLights[" + std::to_string(newIndex) + "].direction";
+			lightPropertyNamesList[i].positionName = "pointLights[" + std::to_string(newIndex) + "].position";
+			lightPropertyNamesList[i].ambientName = "pointLights[" + std::to_string(newIndex) + "].ambientColor";
+			lightPropertyNamesList[i].diffuseName = "pointLights[" + std::to_string(newIndex) + "].diffuseColor";
+			lightPropertyNamesList[i].specularName = "pointLights[" + std::to_string(newIndex) + "].specular";
+			lightPropertyNamesList[i].constantName = "pointLights[" + std::to_string(newIndex) + "].constant";
+			lightPropertyNamesList[i].linearName = "pointLights[" + std::to_string(newIndex) + "].linear";
+			lightPropertyNamesList[i].quadraticName = "pointLights[" + std::to_string(newIndex) + "].quadratic";
 		}
 	}
 
-	void SetUniforms(unsigned int& shader)
+	void SetUniforms(unsigned int& _shader)
 	{
 		for (int i = 0; i < lightPropertiesList.size(); i++)
 		{
-			int directionalLightDirection = glGetUniformLocation(shader, lightPropertyNamesList[i].directionName);
-			int pointLightPosition = glGetUniformLocation(shader, lightPropertyNamesList[i].positionName);
-			int pointLightAmbientColor = glGetUniformLocation(shader, lightPropertyNamesList[i].ambientName);
-			int pointLightDiffuseColor = glGetUniformLocation(shader, lightPropertyNamesList[i].diffuseName);
-			int pointLightSpecular = glGetUniformLocation(shader, lightPropertyNamesList[i].specularName);
+			int directionalLightDirection = glGetUniformLocation(_shader, lightPropertyNamesList[i].directionName.c_str());
+			int pointLightPosition = glGetUniformLocation(_shader, lightPropertyNamesList[i].positionName.c_str());
+			int pointLightAmbientColor = glGetUniformLocation(_shader, lightPropertyNamesList[i].ambientName.c_str());
+			int pointLightDiffuseColor = glGetUniformLocation(_shader, lightPropertyNamesList[i].diffuseName.c_str());
+			int pointLightSpecular = glGetUniformLocation(_shader, lightPropertyNamesList[i].specularName.c_str());
 
-			int pointLightConstant = glGetUniformLocation(shader, lightPropertyNamesList[i].constantName);
-			int pointLightLinear = glGetUniformLocation(shader, lightPropertyNamesList[i].linearName);
-			int pointLightQuadratic = glGetUniformLocation(shader, lightPropertyNamesList[i].quadraticName);
+			int pointLightConstant = glGetUniformLocation(_shader, lightPropertyNamesList[i].constantName.c_str());
+			int pointLightLinear = glGetUniformLocation(_shader, lightPropertyNamesList[i].linearName.c_str());
+			int pointLightQuadratic = glGetUniformLocation(_shader, lightPropertyNamesList[i].quadraticName.c_str());
 
 			glUniform3f(pointLightPosition, lightPropertiesList[i].position.x, lightPropertiesList[i].position.y, lightPropertiesList[i].position.z);
 			glUniform3f(pointLightAmbientColor, lightPropertiesList[i].ambientColor.x, lightPropertiesList[i].ambientColor.y, lightPropertiesList[i].ambientColor.z);
@@ -265,12 +293,6 @@ int main()
 	BoxInfo currentBoxInfo;
 	LightInfo currentLightInfo;
 
-	static double previousT = 0;
-	int currentLightIndex = 0;
-	int currentBoxIndex = 0;
-	bool updateLightSettings = false;
-	bool updateBoxSettings = false;
-
 	// GLFW Setup //
 	glfwInit();
 
@@ -281,10 +303,15 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	//GLFWwindow* window = glfwCreateWindow(800, 800, "Les 3 | Tom Renkema", nullptr, nullptr);
-	GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", primaryMonitor, NULL);
-	glfwSetWindowMonitor(window, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate);
+	
+	GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", NULL, NULL); // MAXIMIZED WINDOWED
+	glfwSetWindowMonitor(window, NULL, 0, 0, 0, 0, mode->refreshRate); // MAXIMIZED WINDOWED
+
+	//GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", primaryMonitor, NULL); // FULL SCREEN
+	//glfwSetWindowMonitor(window, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate); // FULL SCREEN
+
 	glfwMakeContextCurrent(window);
+	glfwMaximizeWindow(window);
 
 	glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_HIDDEN);
 
@@ -294,7 +321,6 @@ int main()
 		return -1;
 	}
 
-	glViewport(0, 0, mode->width, mode->height);
 	glfwShowWindow(window);
 
 	glfwSetKeyCallback(window, Key_Callback);
@@ -453,37 +479,8 @@ int main()
 	crosshair_flags |= ImGuiWindowFlags_NoBackground;
 	crosshair_flags |= ImGuiWindowFlags_NoTitleBar;
 
-	// ADD DIRECTIONAL LIGHT //
-	// Set All Light Info
-	LightInfo directionalLightInfo;
-	directionalLightInfo.ambientColor = vec3(1.0f);
-
-	// Set All Light Property Names
-	LightPropertyNames directionalLightPropertyNames;
-	const char* str = "directionalLight.%s";
-
-	char* directionBuffer = (char*)malloc(50 * sizeof(char));
-	char* ambientBuffer = (char*)malloc(50 * sizeof(char));
-	char* diffuseBuffer = (char*)malloc(50 * sizeof(char));
-	char* specularBuffer = (char*)malloc(50 * sizeof(char));
-
-	std::snprintf(directionBuffer, 50, str, "direction");
-	directionalLightPropertyNames.directionName = directionBuffer;
-	std::snprintf(ambientBuffer, 50, str, "ambientColor");
-	directionalLightPropertyNames.ambientName = ambientBuffer;
-	std::snprintf(diffuseBuffer, 50, str, "diffuseColor");
-	directionalLightPropertyNames.diffuseName = diffuseBuffer;
-	std::snprintf(specularBuffer, 50, str, "specular");
-	directionalLightPropertyNames.positionName = "";
-	directionalLightPropertyNames.specularName = specularBuffer;
-	directionalLightPropertyNames.constantName = "";
-	directionalLightPropertyNames.linearName = "";
-	directionalLightPropertyNames.quadraticName = "";
-
-	lightingSystem.AddLight(directionalLightInfo, directionalLightPropertyNames);
-
-	updateLightSettings = true;
-	// END DIRECTIONAL LIGHT //
+	// ADD DIRECTIONAL LIGHT
+	lightingSystem.AddDirectionalLight();
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -634,42 +631,8 @@ int main()
 		if (Button("Add Light", ImVec2(260, 20)))
 		{
 			int index = lightingSystem.lightPropertiesList.size() - 1;
+			lightingSystem.AddLight(index, currentLightInfo);
 
-			currentLightInfo = LightInfo();
-
-			// Set All Light Property Names
-			LightPropertyNames lightPropertyNames;
-			const char* str = "pointLights[%d].%s";
-
-			char* directionBuffer = (char*)malloc(50 * sizeof(char));
-			char* positionBuffer = (char*)malloc(50 * sizeof(char));
-			char* ambientBuffer = (char*)malloc(50 * sizeof(char));
-			char* diffuseBuffer = (char*)malloc(50 * sizeof(char));
-			char* specularBuffer = (char*)malloc(50 * sizeof(char));
-			char* constantBuffer = (char*)malloc(50 * sizeof(char));
-			char* linearBuffer = (char*)malloc(50 * sizeof(char));
-			char* quadraticBuffer = (char*)malloc(50 * sizeof(char));
-
-			std::snprintf(directionBuffer, 50, str, index, "direction");
-			lightPropertyNames.directionName = directionBuffer;
-			std::snprintf(positionBuffer, 50, str, index, "position");
-			lightPropertyNames.positionName = positionBuffer;
-			std::snprintf(ambientBuffer, 50, str, index, "ambientColor");
-			lightPropertyNames.ambientName = ambientBuffer;
-			std::snprintf(diffuseBuffer, 50, str, index, "diffuseColor");
-			lightPropertyNames.diffuseName = diffuseBuffer;
-			std::snprintf(specularBuffer, 50, str, index, "specular");
-			lightPropertyNames.specularName = specularBuffer;
-			std::snprintf(constantBuffer, 50, str, index, "constant");
-			lightPropertyNames.constantName = constantBuffer;
-			std::snprintf(linearBuffer, 50, str, index, "linear");
-			lightPropertyNames.linearName = linearBuffer;
-			std::snprintf(quadraticBuffer, 50, str, index, "quadratic");
-			lightPropertyNames.quadraticName = quadraticBuffer;
-
-			lightingSystem.AddLight(currentLightInfo, lightPropertyNames);
-
-			currentLightIndex = index + 1;
 			updateLightSettings = true;
 		}
 
