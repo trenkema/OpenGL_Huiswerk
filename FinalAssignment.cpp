@@ -22,8 +22,8 @@ using namespace ImGui;
 
 // Camera & Mouse Settings
 double cursorX = -1, cursorY = -1, lastCursorX, lastCursorY;
-float cameraSensitivity = 15.0f;
-float cameraSpeed = 2.0f;
+int cameraSensitivity = 15;
+int cameraSpeed = 2;
 vec3 cameraPosition(0, 0, 10), cameraForward(0, 0, -1), cameraUp(0, 1, 0);
 bool showCursor = true;
 
@@ -31,10 +31,43 @@ bool showCursor = true;
 double previousT = 0;
 
 // Objects & Light Settings
-int currentLightIndex = 0;
-int currentBoxIndex = 0;
+int index = 0;
+int selectedSceneObject = 0;
 bool updateLightSettings = true;
 bool updateBoxSettings = false;
+
+enum class objectType { DirLight = 0, PointLight = 1, Box = 2 };
+
+struct Object
+{
+	objectType type = objectType::DirLight;
+	int index = 0; // Index per type
+	string name = "";
+};
+
+struct ObjectSystem
+{
+	vector<Object> objects;
+
+	void AddObject(Object _object)
+	{
+		objects.push_back(_object);
+	}
+
+	void RemoveObject(objectType _type, int _index)
+	{
+		objects.erase(objects.begin() + _index);
+
+		for (int i = _index; i < objects.size(); i++)
+		{
+			if (objects[i].type != _type) continue;
+
+			int newIndex = objects[i].index - 1;
+
+			objects[i].index = newIndex;
+		}
+	}
+};
 
 struct BoxInfo
 {
@@ -48,14 +81,14 @@ struct BoxSystem
 {
 	vector<BoxInfo> boxes;
 
-	void AddBox(const BoxInfo& box)
+	void AddBox(const BoxInfo& _box)
 	{
-		boxes.push_back(box);
+		boxes.push_back(_box);
 	}
 
-	void RemoveBox(int index)
+	void RemoveBox(int _index)
 	{
-		boxes.erase(boxes.begin() + index);
+		boxes.erase(boxes.begin() + _index);
 	}
 };
 
@@ -90,10 +123,7 @@ struct LightingSystem
 	vector<LightPropertyNames> lightPropertyNamesList;
 
 	void AddLight(int _index, LightInfo _currentLightInfo) {
-		// Empty LightInfo
 		LightInfo lightInfo;
-
-		// Set All Light Property Names
 		LightPropertyNames lightPropertyNames;
 
 		lightPropertyNames.directionName = "pointLights[" + std::to_string(_index) + "].direction";
@@ -108,7 +138,6 @@ struct LightingSystem
 		lightPropertiesList.push_back(lightInfo);
 		lightPropertyNamesList.push_back(lightPropertyNames);
 
-		currentLightIndex = lightPropertiesList.size() - 1;
 		_currentLightInfo = lightInfo;
 		updateLightSettings = true;
 	}
@@ -116,7 +145,7 @@ struct LightingSystem
 	void AddDirectionalLight()
 	{
 		LightInfo directionalLightInfo;
-		LightPropertyNames directionalLightPropertyNames;	
+		LightPropertyNames directionalLightPropertyNames;
 
 		directionalLightInfo.ambientColor = vec3(1.0f);
 
@@ -177,57 +206,57 @@ struct LightingSystem
 	}
 };
 
-int Clamp(int value, int minVal, int maxVal) {
-	if (value < minVal)
+int Clamp(int _value, int _minVal, int _maxVal) {
+	if (_value < _minVal)
 	{
-		return minVal;
+		return _minVal;
 	}
-	else if (value > maxVal)
+	else if (_value > _maxVal)
 	{
-		return maxVal;
+		return _maxVal;
 	}
 	else
 	{
-		return value;
+		return _value;
 	}
 }
 
-void Key_Callback(GLFWwindow* window, int key, int scancode, int action, int mods)
+void Key_Callback(GLFWwindow* _window, int _key, int _scancode, int _action, int _mods)
 {
-	if (action == GLFW_RELEASE) return; // Only handle press events
+	if (_action == GLFW_RELEASE) return; // Only handle press events
 
-	if (key == GLFW_KEY_ESCAPE)
+	if (_key == GLFW_KEY_ESCAPE)
 	{
 		showCursor = !showCursor;
 	}
 }
 
-void HandleInput(GLFWwindow* window, float deltaTime) {
+void HandleInput(GLFWwindow* _window, float _deltaTime) {
 	static bool w, s, a, d, space, ctrl;
 	static float pitch = 0, yaw = 180 * cameraForward.z;
-	float sensitivity = cameraSensitivity * deltaTime;
-	float speed = cameraSpeed * deltaTime;
+	float sensitivity = cameraSensitivity * _deltaTime;
+	float speed = cameraSpeed * _deltaTime;
 
 	lastCursorX = cursorX;
 	lastCursorY = cursorY;
-	glfwGetCursorPos(window, &cursorX, &cursorY);
+	glfwGetCursorPos(_window, &cursorX, &cursorY);
 	glm::vec2 mouseDelta(cursorX - lastCursorX, cursorY - lastCursorY);
 
 	if (showCursor) return;
 
-	if (glfwGetKey(window, GLFW_KEY_W) == GLFW_PRESS) w = true; // FORWARD
-	else if (glfwGetKey(window, GLFW_KEY_W) == GLFW_RELEASE) w = false;
-	if (glfwGetKey(window, GLFW_KEY_S) == GLFW_PRESS) s = true; // BACKWARDS
-	else if (glfwGetKey(window, GLFW_KEY_S) == GLFW_RELEASE) s = false;
-	if (glfwGetKey(window, GLFW_KEY_A) == GLFW_PRESS) a = true; // LEFT
-	else if (glfwGetKey(window, GLFW_KEY_A) == GLFW_RELEASE) a = false;
-	if (glfwGetKey(window, GLFW_KEY_D) == GLFW_PRESS) d = true; // RIGHT
-	else if (glfwGetKey(window, GLFW_KEY_D) == GLFW_RELEASE) d = false;
+	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) w = true; // FORWARD
+	else if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_RELEASE) w = false;
+	if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) s = true; // BACKWARDS
+	else if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_RELEASE) s = false;
+	if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_PRESS) a = true; // LEFT
+	else if (glfwGetKey(_window, GLFW_KEY_A) == GLFW_RELEASE) a = false;
+	if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_PRESS) d = true; // RIGHT
+	else if (glfwGetKey(_window, GLFW_KEY_D) == GLFW_RELEASE) d = false;
 
-	if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_PRESS) space = true; // UP
-	else if (glfwGetKey(window, GLFW_KEY_SPACE) == GLFW_RELEASE) space = false;
-	if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) ctrl = true; // DOWN
-	else if (glfwGetKey(window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE) ctrl = false;
+	if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_PRESS) space = true; // UP
+	else if (glfwGetKey(_window, GLFW_KEY_SPACE) == GLFW_RELEASE) space = false;
+	if (glfwGetKey(_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) ctrl = true; // DOWN
+	else if (glfwGetKey(_window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE) ctrl = false;
 
 	// calculate rotation & movement
 	yaw -= mouseDelta.x * sensitivity;
@@ -252,18 +281,18 @@ void HandleInput(GLFWwindow* window, float deltaTime) {
 	cameraForward = q * glm::vec3(0, 0, 1);
 }
 
-void LoadFromFile(const char* url, char** target) {
-	ifstream stream(url, ios::binary);
+void LoadFromFile(const char* _url, char** _target) {
+	ifstream stream(_url, ios::binary);
 	stream.seekg(0, stream.end);
 	int total = stream.tellg();
-	*target = new char[total + 1];
+	*_target = new char[total + 1];
 	stream.seekg(0, stream.beg);
-	stream.read(*target, total);
-	(*target)[total] = '\0';
+	stream.read(*_target, total);
+	(*_target)[total] = '\0';
 	stream.close();
 }
 
-unsigned int LoadTexture(string url, GLenum format) {
+unsigned int LoadTexture(string _url, GLenum _format) {
 	// gen & bind IDs
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
@@ -273,12 +302,12 @@ unsigned int LoadTexture(string url, GLenum format) {
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	int width, height, channels;
 	unsigned char* data;
-	data = stbi_load(url.c_str(), &width, &height, &channels, 0);
+	data = stbi_load(_url.c_str(), &width, &height, &channels, 0);
 	if (data == nullptr) {
-		cout << "Error loading file: " << url.c_str() << endl;
+		cout << "Error loading file: " << _url.c_str() << endl;
 	}
 	else {
-		glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
+		glTexImage2D(GL_TEXTURE_2D, 0, _format, width, height, 0, _format, GL_UNSIGNED_BYTE, data);
 		glGenerateMipmap(GL_TEXTURE_2D);
 	}
 	stbi_image_free(data);
@@ -290,6 +319,7 @@ int main()
 {
 	LightingSystem lightingSystem;
 	BoxSystem boxSystem;
+	ObjectSystem objectSystem;
 	BoxInfo currentBoxInfo;
 	LightInfo currentLightInfo;
 
@@ -303,7 +333,7 @@ int main()
 	glfwWindowHint(GLFW_CONTEXT_VERSION_MINOR, 3);
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
-	
+
 	GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", NULL, NULL); // MAXIMIZED WINDOWED
 	glfwSetWindowMonitor(window, NULL, 0, 0, 0, 0, mode->refreshRate); // MAXIMIZED WINDOWED
 
@@ -470,6 +500,7 @@ int main()
 	window_flags |= ImGuiWindowFlags_AlwaysAutoResize;
 	window_flags |= ImGuiWindowFlags_NoResize;
 	window_flags |= ImGuiWindowFlags_NoMove;
+	window_flags |= ImGuiWindowFlags_NoCollapse;
 
 	ImGuiWindowFlags crosshair_flags = 0;
 	crosshair_flags |= ImGuiWindowFlags_AlwaysAutoResize;
@@ -481,6 +512,8 @@ int main()
 
 	// ADD DIRECTIONAL LIGHT
 	lightingSystem.AddDirectionalLight();
+
+	objectSystem.AddObject(Object{ objectType::DirLight, 0, "Directional Light" });
 
 	glEnable(GL_DEPTH_TEST);
 
@@ -584,212 +617,259 @@ int main()
 		Text("+");
 		End();
 
-		Begin("Settings", NULL, window_flags);
+		Begin("Options", NULL, window_flags);
 		ImVec2 newLightSettingsWindowSize = GetWindowSize();
-		ImVec2 newLightSettingsWindowPosition = ImVec2(50, 50);
+		ImVec2 newLightSettingsWindowPosition = ImVec2(25, 25);
 		SetWindowPos(newLightSettingsWindowPosition);
 		SetWindowFontScale(1.25f);
 
-		Text("Camera Sensitivity:");
-		SameLine(0.0f, spacing);
+		Text("Camera Sensitivity");
+		SameLine();
+		SetCursorPosX(177.5f);
+		PushItemWidth(90);
+		DragInt("##CameraSensitivity", &cameraSensitivity, 0.1f, 0, 100);
 
-		PushButtonRepeat(true);
-		if (ArrowButton("#leftSensitivity", ImGuiDir_Left))
+		Text("Camera Speed");
+		SameLine();
+		SetCursorPosX(177.5f);
+		PushItemWidth(90);
+		DragInt("##CameraSpeed", &cameraSpeed, 0.1f, 0, 100);
+
+		if (Button("Add Point Light", ImVec2(260, 20)))
 		{
-			cameraSensitivity--;
-			cameraSensitivity = Clamp(cameraSensitivity, 0, 100);
-		}
+			int i = lightingSystem.lightPropertiesList.size() - 1;
+			lightingSystem.AddLight(i, currentLightInfo);
 
-		SameLine(0.0f, spacing);
-		Text("%f", cameraSensitivity);
-		SameLine(0.0f, spacing);
+			objectSystem.AddObject(Object{ objectType::PointLight, i + 1, "Point Light" });
 
-		if (ArrowButton("#rightSensitivity", ImGuiDir_Right))
-		{
-			cameraSensitivity++;
-		}
-
-		Text("Camera Speed:");
-		SameLine(0.0f, spacing);
-
-		if (ArrowButton("#leftSpeed", ImGuiDir_Left))
-		{
-			cameraSpeed--;
-			cameraSpeed = Clamp(cameraSpeed, 0, 100);
-		}
-
-		SameLine(0.0f, spacing);
-		Text("%f", cameraSpeed);
-		SameLine(0.0f, spacing);
-
-		if (ArrowButton("#rightSpeed", ImGuiDir_Right))
-		{
-			cameraSpeed++;
-		}
-		PopButtonRepeat();
-
-		if (Button("Add Light", ImVec2(260, 20)))
-		{
-			int index = lightingSystem.lightPropertiesList.size() - 1;
-			lightingSystem.AddLight(index, currentLightInfo);
-
+			index = objectSystem.objects.size() - 1;
+			selectedSceneObject = objectSystem.objects.size() - 1;
 			updateLightSettings = true;
 		}
 
 		if (Button("Add Box", ImVec2(260, 20)))
 		{
-			int index = boxSystem.boxes.size();
-
 			currentBoxInfo = BoxInfo();
-
+			int i = boxSystem.boxes.size();
 			boxSystem.AddBox(currentBoxInfo);
 
-			currentBoxIndex = index;
+			objectSystem.AddObject(Object{ objectType::Box, i, "Box" });
+
+			index = objectSystem.objects.size() - 1;
+			selectedSceneObject = objectSystem.objects.size() - 1;
+			updateBoxSettings = true;
 		}
 
 		End();
 
-		Begin("Adjust Light | Settings", NULL, window_flags);
-		ImVec2 adjustLightSettingsWindowSize = GetWindowSize();
-		ImVec2 adjustLightSettingsWindowPosition = ImVec2(50, newLightSettingsWindowPosition.y + newLightSettingsWindowSize.y + 25);
-		SetWindowPos(adjustLightSettingsWindowPosition);
+		Begin("Objects", NULL, window_flags);
+		ImVec2 objectsSettingsWindowSize = GetWindowSize();
+		ImVec2 objectsSettingsWindowPosition = ImVec2(25, newLightSettingsWindowPosition.y + newLightSettingsWindowSize.y + 25);
+		SetWindowPos(objectsSettingsWindowPosition);
 		SetWindowFontScale(1.25f);
 
-		Text(currentLightIndex == 0 ? "Directional Light" : "Spot Light");
-		Text("Current Light:");
-		SameLine(0.0f, spacing);
-
-		PushButtonRepeat(true);
-		if (ArrowButton("#leftLightIndex", ImGuiDir_Left))
+		if (TreeNodeEx("Scene Objects", ImGuiTreeNodeFlags_DefaultOpen))
 		{
-			if (lightingSystem.lightPropertiesList.size() > 0)
+			ImGui::BeginChild("##scrollingregion", ImVec2(200, 200));
+
+			for (int i = 0; i < objectSystem.objects.size(); i++)
 			{
-				currentLightIndex--;
-				currentLightIndex = Clamp(currentLightIndex, 0, lightingSystem.lightPropertiesList.size() - 1);
-				updateLightSettings = true;
+				if (Selectable((objectSystem.objects[i].name + " " + to_string(objectSystem.objects[i].index)).c_str(), selectedSceneObject == i))
+				{
+					index = i;
+					selectedSceneObject = i;
+					updateLightSettings = true;
+					updateBoxSettings = true;
+				}
 			}
+
+			EndChild();
+			TreePop();
 		}
 
-		SameLine(0.0f, spacing);
-		Text("%d", currentLightIndex);
-		SameLine(0.0f, spacing);
+		End();
 
-		if (ArrowButton("#rightLightIndex", ImGuiDir_Right))
+		Begin("Adjust Object | Settings", NULL, window_flags);
+		ImVec2 adjustObjectSettingsWindowSize = GetWindowSize();
+		ImVec2 adjustObjectSettingsWindowPosition = ImVec2(25, objectsSettingsWindowPosition.y + objectsSettingsWindowSize.y + 25);
+		SetWindowPos(adjustObjectSettingsWindowPosition);
+		SetWindowFontScale(1.25f);
+
+		Text("Current Object: %s", objectSystem.objects[index].name.c_str());
+
+		// Update Current Light or Box Settings
+		if (updateLightSettings || updateBoxSettings)
 		{
-			if (lightingSystem.lightPropertiesList.size() > 0)
+			if (objectSystem.objects[index].type != objectType::Box)
 			{
-				currentLightIndex++;
-				currentLightIndex = Clamp(currentLightIndex, 0, lightingSystem.lightPropertiesList.size() - 1);
-				updateLightSettings = true;
+				currentLightInfo = lightingSystem.lightPropertiesList[objectSystem.objects[index].index];
 			}
-		}
-		PopButtonRepeat();
-
-		// Update Current Light Settings
-		if (updateLightSettings)
-		{
-			if (lightingSystem.lightPropertiesList.size() > 0)
+			else if (boxSystem.boxes.size() > 0 && objectSystem.objects[index].type == objectType::Box)
 			{
-				currentLightInfo = lightingSystem.lightPropertiesList[currentLightIndex];
+				currentBoxInfo = boxSystem.boxes[objectSystem.objects[index].index];
 			}
 
 			updateLightSettings = false;
+			updateBoxSettings = false;
 		}
 
-		if (lightingSystem.lightPropertiesList.size() > 0)
+		if (objectSystem.objects[index].type != objectType::Box)
 		{
-			if (currentLightIndex == 0) DragFloat3("Light Direction", value_ptr(currentLightInfo.direction));
-			if (currentLightIndex != 0) DragFloat3("Light Position", value_ptr(currentLightInfo.position));
+			if (index == 0) DragFloat3("Light Direction", value_ptr(currentLightInfo.direction));
+			if (index != 0) DragFloat3("Light Position", value_ptr(currentLightInfo.position));
 			ColorEdit3("Ambient Color", value_ptr(currentLightInfo.ambientColor));
 			ColorEdit3("Diffuse Color", value_ptr(currentLightInfo.diffuseColor));
 			DragFloat3("Specular", value_ptr(currentLightInfo.specular));
 
-			if (currentLightIndex != 0)
+			if (index != 0)
 			{
 				DragFloat("Constant", &currentLightInfo.constant);
 				DragFloat("Linear", &currentLightInfo.linear);
 				DragFloat("Quadratic", &currentLightInfo.quadratic);
 			}
 
-			lightingSystem.lightPropertiesList[currentLightIndex] = currentLightInfo;
+			lightingSystem.lightPropertiesList[objectSystem.objects[index].index] = currentLightInfo;
 
-			if (currentLightIndex != 0)
+			if (index != 0)
 			{
 				if (Button("Remove Light", ImVec2(260, 20)))
 				{
-					lightingSystem.RemoveLight(currentLightIndex);
-					if (currentLightIndex > 0) currentLightIndex--;
+					lightingSystem.RemoveLight(objectSystem.objects[index].index);
+					objectSystem.RemoveObject(objectSystem.objects[index].type, index);
+					if (index > objectSystem.objects.size()) index--;
 					updateLightSettings = true;
 				}
 			}
 		}
 
-		End();
-
-		Begin("Adjust Box | Settings", NULL, window_flags);
-		ImVec2 adjustBoxSettingsWindowSize = GetWindowSize();
-		ImVec2 adjustBoxSettingsWindowPosition = ImVec2(50, adjustLightSettingsWindowPosition.y + adjustLightSettingsWindowSize.y + 25);
-		SetWindowPos(adjustBoxSettingsWindowPosition);
-		SetWindowFontScale(1.25f);
-
-		Text("Current Box:");
-		SameLine(0.0f, spacing);
-
-		PushButtonRepeat(true);
-		if (ArrowButton("#leftBoxIndex", ImGuiDir_Left))
-		{
-			if (boxSystem.boxes.size() > 0)
-			{
-				currentBoxIndex--;
-				currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
-				updateBoxSettings = true;
-			}
-		}
-
-		SameLine(0.0f, spacing);
-		Text("%d", currentBoxIndex);
-		SameLine(0.0f, spacing);
-
-		if (ArrowButton("#rightBoxIndex", ImGuiDir_Right))
-		{
-			if (boxSystem.boxes.size() > 0)
-			{
-				currentBoxIndex++;
-				currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
-				updateBoxSettings = true;
-			}
-		}
-		PopButtonRepeat();
-
-		// Update Current Box Settings
-		if (updateBoxSettings)
-		{
-			if (boxSystem.boxes.size() > 0)
-			{
-				currentBoxInfo = boxSystem.boxes[currentBoxIndex];
-			}
-
-			updateBoxSettings = false;
-		}
-
-		if (boxSystem.boxes.size() > 0)
+		if (boxSystem.boxes.size() > 0 && objectSystem.objects[index].type == objectType::Box)
 		{
 			DragFloat3("Box Position", value_ptr(currentBoxInfo.position));
 			DragFloat("Box X Rotation", &currentBoxInfo.angleX);
 			DragFloat("Box Y Rotation", &currentBoxInfo.angleY);
 			Checkbox("Box Auto Rotation", &currentBoxInfo.autoRotation);
 
-			boxSystem.boxes[currentBoxIndex] = currentBoxInfo;
+			boxSystem.boxes[objectSystem.objects[index].index] = currentBoxInfo;
 
 			if (Button("Remove Box", ImVec2(260, 20)))
 			{
-				boxSystem.RemoveBox(currentBoxIndex);
-				if (currentBoxIndex > 0) currentBoxIndex--;
+				boxSystem.RemoveBox(objectSystem.objects[index].index);
+				objectSystem.RemoveObject(objectSystem.objects[index].type, index);
+				if (index >= objectSystem.objects.size()) index--;
 				updateBoxSettings = true;
 			}
 		}
 
 		End();
+
+		//Text(currentLightIndex == 0 ? "Directional Light" : "Spot Light");
+		//Text("Current Light:");
+		//SameLine(0.0f, spacing);
+
+		//PushButtonRepeat(true);
+		//if (ArrowButton("#leftLightIndex", ImGuiDir_Left))
+		//{
+		//	if (lightingSystem.lightPropertiesList.size() > 0)
+		//	{
+		//		currentLightIndex--;
+		//		currentLightIndex = Clamp(currentLightIndex, 0, lightingSystem.lightPropertiesList.size() - 1);
+		//		updateLightSettings = true;
+		//	}
+		//}
+
+		//SameLine(0.0f, spacing);
+		//Text("%d", currentLightIndex);
+		//SameLine(0.0f, spacing);
+
+		//if (ArrowButton("#rightLightIndex", ImGuiDir_Right))
+		//{
+		//	if (lightingSystem.lightPropertiesList.size() > 0)
+		//	{
+		//		currentLightIndex++;
+		//		currentLightIndex = Clamp(currentLightIndex, 0, lightingSystem.lightPropertiesList.size() - 1);
+		//		updateLightSettings = true;
+		//	}
+		//}
+		//PopButtonRepeat();
+
+		//// Update Current Light Settings
+		//if (updateLightSettings)
+		//{
+		//	if (lightingSystem.lightPropertiesList.size() > 0)
+		//	{
+		//		currentLightInfo = lightingSystem.lightPropertiesList[currentLightIndex];
+		//	}
+
+		//	updateLightSettings = false;
+		//}
+
+
+		//End();
+
+		//Begin("Adjust Box | Settings", NULL, window_flags);
+		//ImVec2 adjustBoxSettingsWindowSize = GetWindowSize();
+		//ImVec2 adjustBoxSettingsWindowPosition = ImVec2(25, adjustLightSettingsWindowPosition.y + adjustLightSettingsWindowSize.y + 25);
+		//SetWindowPos(adjustBoxSettingsWindowPosition);
+		//SetWindowFontScale(1.25f);
+
+		//Text("Current Box:");
+		//SameLine(0.0f, spacing);
+
+		//PushButtonRepeat(true);
+		//if (ArrowButton("#leftBoxIndex", ImGuiDir_Left))
+		//{
+		//	if (boxSystem.boxes.size() > 0)
+		//	{
+		//		currentBoxIndex--;
+		//		currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
+		//		updateBoxSettings = true;
+		//	}
+		//}
+
+		//SameLine(0.0f, spacing);
+		//Text("%d", currentBoxIndex);
+		//SameLine(0.0f, spacing);
+
+		//if (ArrowButton("#rightBoxIndex", ImGuiDir_Right))
+		//{
+		//	if (boxSystem.boxes.size() > 0)
+		//	{
+		//		currentBoxIndex++;
+		//		currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
+		//		updateBoxSettings = true;
+		//	}
+		//}
+		//PopButtonRepeat();
+
+		//// Update Current Box Settings
+		//if (updateBoxSettings)
+		//{
+		//	if (boxSystem.boxes.size() > 0)
+		//	{
+		//		currentBoxInfo = boxSystem.boxes[currentBoxIndex];
+		//	}
+
+		//	updateBoxSettings = false;
+		//}
+
+		//if (boxSystem.boxes.size() > 0)
+		//{
+		//	DragFloat3("Box Position", value_ptr(currentBoxInfo.position));
+		//	DragFloat("Box X Rotation", &currentBoxInfo.angleX);
+		//	DragFloat("Box Y Rotation", &currentBoxInfo.angleY);
+		//	Checkbox("Box Auto Rotation", &currentBoxInfo.autoRotation);
+
+		//	boxSystem.boxes[currentBoxIndex] = currentBoxInfo;
+
+		//	if (Button("Remove Box", ImVec2(260, 20)))
+		//	{
+		//		boxSystem.RemoveBox(currentBoxIndex);
+		//		if (currentBoxIndex > 0) currentBoxIndex--;
+		//		updateBoxSettings = true;
+		//	}
+		//}
+
+		//End();
 
 		Render();
 		ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());

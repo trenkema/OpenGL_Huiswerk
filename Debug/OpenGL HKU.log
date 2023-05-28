@@ -1,14 +1,14 @@
 ﻿  FinalAssignment.cpp
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(137,25): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(155,21): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(258,12): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(490,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(527,39): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(528,33): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(541,21): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(564,22): warning C4018: '<': signed/unsigned mismatch
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(601,30): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(601,29): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(619,24): warning C4244: 'argument': conversion from 'float' to 'int', possible loss of data
-C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(619,23): warning C4244: '=': conversion from 'int' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(61,26): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(166,26): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(184,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(287,12): warning C4244: 'initializing': conversion from 'std::streamoff' to 'int', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(522,19): warning C4244: 'initializing': conversion from 'double' to 'float', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(559,39): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(560,33): warning C4244: 'argument': conversion from 'float' to 'GLint', possible loss of data
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(573,21): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(596,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(675,22): warning C4018: '<': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(740,16): warning C4018: '>': signed/unsigned mismatch
+C:\Users\tomre\Documents\OpenGL_Huiswerk\FinalAssignment.cpp(760,15): warning C4018: '>=': signed/unsigned mismatch
   OpenGL HKU.vcxproj -> C:\Users\tomre\Documents\OpenGL_Huiswerk\Debug\OpenGL HKU.exe
