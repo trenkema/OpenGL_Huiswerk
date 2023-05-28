@@ -34,7 +34,7 @@ double previousT = 0;
 int index = 0;
 int selectedSceneObject = 0;
 bool updateLightSettings = true;
-bool updateBoxSettings = false;
+bool updateBoxSettings = true;
 
 enum class objectType { DirLight = 0, PointLight = 1, Box = 2 };
 
@@ -72,6 +72,7 @@ struct ObjectSystem
 struct BoxInfo
 {
 	vec3 position = vec3(0.0f);
+	vec3 scale = vec3(1.0f);
 	float angleX = 0.0f;
 	float angleY = 0.0f;
 	bool autoRotation = false;
@@ -515,6 +516,17 @@ int main()
 
 	objectSystem.AddObject(Object{ objectType::DirLight, 0, "Directional Light" });
 
+	// ADD FLOOR BOX
+	currentBoxInfo = BoxInfo();
+	currentBoxInfo.position = vec3(0.0f, -5.0f, 0.0f);
+	currentBoxInfo.scale = vec3(25, 1, 25);
+	boxSystem.AddBox(currentBoxInfo);
+
+	objectSystem.AddObject(Object{ objectType::Box, 0, "Box" });
+
+	index = objectSystem.objects.size() - 1;
+	selectedSceneObject = objectSystem.objects.size() - 1;
+
 	glEnable(GL_DEPTH_TEST);
 
 	while (!glfwWindowShouldClose(window)) {
@@ -576,19 +588,11 @@ int main()
 			world = glm::translate(world, boxSystem.boxes[i].position);
 			world = glm::rotate(world, glm::radians((boxSystem.boxes[i].autoRotation ? (float)time : 1.0f) * boxSystem.boxes[i].angleX), glm::vec3(1, 0, 0));
 			world = glm::rotate(world, glm::radians((boxSystem.boxes[i].autoRotation ? (float)time : 1.0f) * boxSystem.boxes[i].angleY), glm::vec3(0, 1, 0));
-			world = glm::scale(world, glm::vec3(1.0f));
+			world = glm::scale(world, boxSystem.boxes[i].scale);
 			glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
 			glUniform3fv(cubeColorLoc, 1, glm::value_ptr(vec3(-1.0f)));
 			glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 		}
-
-		// FLOOR //
-		glm::mat4 world = glm::mat4(1.f);
-		world = glm::translate(world, glm::vec3(0.0f, -5.0f, 0.0f));
-		world = glm::scale(world, glm::vec3(25, 1, 25));
-		glUniformMatrix4fv(worldLoc, 1, GL_FALSE, glm::value_ptr(world));
-		glUniform3fv(cubeColorLoc, 1, glm::value_ptr(vec3(-1.0f)));
-		glDrawElements(GL_TRIANGLES, sizeof(indices), GL_UNSIGNED_INT, 0);
 
 		// LIGHT CUBES //
 		if (lightingSystem.lightPropertiesList.size() > 1)
@@ -695,7 +699,8 @@ int main()
 		SetWindowPos(adjustObjectSettingsWindowPosition);
 		SetWindowFontScale(1.25f);
 
-		Text("Current Object: %s", objectSystem.objects[index].name.c_str());
+		string object = (objectSystem.objects[index].name + " " + to_string(objectSystem.objects[index].index));
+		Text("Current Object: %s", object.c_str());
 
 		// Update Current Light or Box Settings
 		if (updateLightSettings || updateBoxSettings)
@@ -715,17 +720,17 @@ int main()
 
 		if (objectSystem.objects[index].type != objectType::Box)
 		{
-			if (index == 0) DragFloat3("Light Direction", value_ptr(currentLightInfo.direction));
-			if (index != 0) DragFloat3("Light Position", value_ptr(currentLightInfo.position));
+			if (index == 0) DragFloat3("Light Direction", value_ptr(currentLightInfo.direction), 0.1f);
+			if (index != 0) DragFloat3("Light Position", value_ptr(currentLightInfo.position), 0.1f);
 			ColorEdit3("Ambient Color", value_ptr(currentLightInfo.ambientColor));
 			ColorEdit3("Diffuse Color", value_ptr(currentLightInfo.diffuseColor));
-			DragFloat3("Specular", value_ptr(currentLightInfo.specular));
+			DragFloat3("Specular", value_ptr(currentLightInfo.specular), 0.1f);
 
 			if (index != 0)
 			{
-				DragFloat("Constant", &currentLightInfo.constant);
-				DragFloat("Linear", &currentLightInfo.linear);
-				DragFloat("Quadratic", &currentLightInfo.quadratic);
+				DragFloat("Constant", &currentLightInfo.constant, 0.1f);
+				DragFloat("Linear", &currentLightInfo.linear, 0.1f);
+				DragFloat("Quadratic", &currentLightInfo.quadratic, 0.1f);
 			}
 
 			lightingSystem.lightPropertiesList[objectSystem.objects[index].index] = currentLightInfo;
@@ -744,9 +749,10 @@ int main()
 
 		if (boxSystem.boxes.size() > 0 && objectSystem.objects[index].type == objectType::Box)
 		{
-			DragFloat3("Box Position", value_ptr(currentBoxInfo.position));
-			DragFloat("Box X Rotation", &currentBoxInfo.angleX);
-			DragFloat("Box Y Rotation", &currentBoxInfo.angleY);
+			DragFloat3("Box Position", value_ptr(currentBoxInfo.position), 0.1f);
+			DragFloat3("Box Scale", value_ptr(currentBoxInfo.scale), 0.1f);
+			DragFloat("Box X Rotation", &currentBoxInfo.angleX, 0.1f);
+			DragFloat("Box Y Rotation", &currentBoxInfo.angleY, 0.1f);
 			Checkbox("Box Auto Rotation", &currentBoxInfo.autoRotation);
 
 			boxSystem.boxes[objectSystem.objects[index].index] = currentBoxInfo;
