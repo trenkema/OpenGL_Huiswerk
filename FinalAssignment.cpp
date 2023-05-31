@@ -12,7 +12,6 @@
 #include <stdlib.h>
 #define STB_IMAGE_IMPLEMENTATION
 #include "stb_image.h"
-//#include "utils.h"
 #include "imgui.h"
 #include "imgui_impl_glfw.h"
 #include "imgui_impl_opengl3.h"
@@ -41,7 +40,7 @@ enum class objectType { DirLight = 0, PointLight = 1, Box = 2 };
 struct Object
 {
 	objectType type = objectType::DirLight;
-	int index = 0; // Index per type
+	int index = 0; // Index per object type
 	string name = "";
 };
 
@@ -180,6 +179,7 @@ struct LightingSystem
 		}
 	}
 
+	// Set the shader values for the lights
 	void SetUniforms(unsigned int& _shader)
 	{
 		for (int i = 0; i < lightPropertiesList.size(); i++)
@@ -245,6 +245,7 @@ void HandleInput(GLFWwindow* _window, float _deltaTime) {
 
 	if (showCursor) return;
 
+	// Retrieve inputs
 	if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_PRESS) w = true; // FORWARD
 	else if (glfwGetKey(_window, GLFW_KEY_W) == GLFW_RELEASE) w = false;
 	if (glfwGetKey(_window, GLFW_KEY_S) == GLFW_PRESS) s = true; // BACKWARDS
@@ -259,7 +260,7 @@ void HandleInput(GLFWwindow* _window, float _deltaTime) {
 	if (glfwGetKey(_window, GLFW_KEY_LEFT_CONTROL) == GLFW_PRESS) ctrl = true; // DOWN
 	else if (glfwGetKey(_window, GLFW_KEY_LEFT_CONTROL) == GLFW_RELEASE) ctrl = false;
 
-	// calculate rotation & movement
+	// Calculate rotation & movement
 	yaw -= mouseDelta.x * sensitivity;
 	pitch += mouseDelta.y * sensitivity;
 	if (pitch < -90.0f) pitch = -90.0f;
@@ -268,9 +269,8 @@ void HandleInput(GLFWwindow* _window, float _deltaTime) {
 	else if (yaw > 180.0f) yaw -= 360;
 	glm::vec3 euler(glm::radians(pitch), glm::radians(yaw), 0);
 	glm::quat q(euler);
-	// update camera position / forward & up
+	// Update camera position / forward & up
 	glm::vec3 translation(0, 0, 0);
-	//implement movement
 	if (w) translation.z += speed;
 	if (s) translation.z -= speed;
 	if (a) translation.x += speed;
@@ -294,11 +294,10 @@ void LoadFromFile(const char* _url, char** _target) {
 }
 
 unsigned int LoadTexture(string _url, GLenum _format) {
-	// gen & bind IDs
+	// Gen & bind IDs
 	unsigned int textureID;
 	glGenTextures(1, &textureID);
 	glBindTexture(GL_TEXTURE_2D, textureID);
-	// instellen texture params
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
 	int width, height, channels;
@@ -318,13 +317,15 @@ unsigned int LoadTexture(string _url, GLenum _format) {
 
 int main()
 {
+	// OBJECTS VARIABLES //
 	LightingSystem lightingSystem;
 	BoxSystem boxSystem;
 	ObjectSystem objectSystem;
 	BoxInfo currentBoxInfo;
 	LightInfo currentLightInfo;
+	// END OBJECTS VARIABLES //
 
-	// GLFW Setup //
+	// GLFW SETUP //
 	glfwInit();
 
 	GLFWmonitor* primaryMonitor = glfwGetPrimaryMonitor();
@@ -335,11 +336,13 @@ int main()
 	glfwWindowHint(GLFW_OPENGL_PROFILE, GLFW_OPENGL_CORE_PROFILE);
 	glfwWindowHint(GLFW_SAMPLES, 4);
 
-	GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", NULL, NULL); // MAXIMIZED WINDOWED
-	glfwSetWindowMonitor(window, NULL, 0, 0, 0, 0, mode->refreshRate); // MAXIMIZED WINDOWED
+	// Maximized Windowed
+	GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", NULL, NULL);
+	glfwSetWindowMonitor(window, NULL, 0, 0, 0, 0, mode->refreshRate);
 
-	//GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", primaryMonitor, NULL); // FULL SCREEN
-	//glfwSetWindowMonitor(window, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate); // FULL SCREEN
+	// Full screen
+	//GLFWwindow* window = glfwCreateWindow(mode->width, mode->height, "Final Assignment", primaryMonitor, NULL);
+	//glfwSetWindowMonitor(window, primaryMonitor, 0, 0, mode->width, mode->height, mode->refreshRate);
 
 	glfwMakeContextCurrent(window);
 	glfwMaximizeWindow(window);
@@ -355,8 +358,9 @@ int main()
 	glfwShowWindow(window);
 
 	glfwSetKeyCallback(window, Key_Callback);
+	// END GLFW SETUP //
 
-	// Setup Box //
+	// SETUP BOX //
 	// Vertices of our triangle!
 	// need 24 vertices for normal/uv-mapped Cube
 	float vertices[] = {
@@ -435,17 +439,19 @@ int main()
 	glEnableVertexAttribArray(2);
 	glBindBuffer(GL_ARRAY_BUFFER, 0);
 	glBindVertexArray(0);
-	///END SETUP OBJECT///
+	// END SETUP BOX //
+	
 	///SETUP SHADER PROGRAM///
 	char* vertexSource;
 	LoadFromFile("vertexShaderFinalAssignment.shader", &vertexSource);
 	char* fragmentSource;
 	LoadFromFile("fragmentShaderFinalAssignment.shader", &fragmentSource);
+	
 	// LOAD & CREATE TEXTURES
-
 	unsigned int diffuseTexID = LoadTexture("container2.png", GL_RGBA);
 	unsigned int specularTexID = LoadTexture("container2_specular.png", GL_RGBA);
-	// END
+	// END LOAD & CREATE TEXTURES
+
 	unsigned int vertID, fragID;
 	vertID = glCreateShader(GL_VERTEX_SHADER);
 	fragID = glCreateShader(GL_FRAGMENT_SHADER);
@@ -473,8 +479,9 @@ int main()
 	glLinkProgram(myProgram);
 	glDeleteShader(vertID);
 	glDeleteShader(fragID);
-	///END SETUP SHADER PROGRAM///
-	/// MATRIX SETUP ///
+	//END SETUP SHADER PROGRAM //
+	
+	// MATRIX SETUP //
 	glUseProgram(myProgram);
 	int worldLoc = glGetUniformLocation(myProgram, "world");
 	int viewLoc = glGetUniformLocation(myProgram, "view");
@@ -482,21 +489,24 @@ int main()
 	int camLoc = glGetUniformLocation(myProgram, "camera");
 	int cubeColorLoc = glGetUniformLocation(myProgram, "cubeColor");
 	int numPointLightsLocation = glGetUniformLocation(myProgram, "numPointLights");
-	/// END MATRIX SETUP ///
+	// END MATRIX SETUP //
+
 	// OPENGL SETTINGS //
 	glEnable(GL_CULL_FACE);
 	glCullFace(GL_BACK);
 	glEnable(GL_MULTISAMPLE);
+	// END OPENGL SETTINGS //
 
-	// Setup ImGui //
+	// IMGUI SETUP //
 	IMGUI_CHECKVERSION();
 	CreateContext();
 	ImGuiIO& io = GetIO(); (void)io;
 	StyleColorsDark();
 	ImGui_ImplGlfw_InitForOpenGL(window, true);
 	ImGui_ImplOpenGL3_Init("#version 330");
+	// END IMGUI SETUP //
 
-	// Set ImGui Flags //
+	// IMGUI FLAGS //
 	ImGuiWindowFlags window_flags = 0;
 	window_flags |= ImGuiWindowFlags_AlwaysAutoResize;
 	window_flags |= ImGuiWindowFlags_NoResize;
@@ -510,18 +520,17 @@ int main()
 	crosshair_flags |= ImGuiWindowFlags_NoMove;
 	crosshair_flags |= ImGuiWindowFlags_NoBackground;
 	crosshair_flags |= ImGuiWindowFlags_NoTitleBar;
+	// END IMGUI FLAGS //
 
-	// ADD DIRECTIONAL LIGHT
+	// Add directional light
 	lightingSystem.AddDirectionalLight();
-
 	objectSystem.AddObject(Object{ objectType::DirLight, 0, "Directional Light" });
 
-	// ADD FLOOR BOX
+	// Add floor box
 	currentBoxInfo = BoxInfo();
 	currentBoxInfo.position = vec3(0.0f, -5.0f, 0.0f);
 	currentBoxInfo.scale = vec3(25, 1, 25);
 	boxSystem.AddBox(currentBoxInfo);
-
 	objectSystem.AddObject(Object{ objectType::Box, 0, "Box" });
 
 	index = objectSystem.objects.size() - 1;
@@ -609,11 +618,11 @@ int main()
 		}
 		// END OBJECTS //
 
+		// IMGUI UI ELEMENTS //
 		ImGuiStyle& style = GetStyle();
 		style.FrameRounding = 3.0f;
 		style.WindowRounding = 3.0f;
 
-		// ImGui UI Elements //
 		Begin("Crosshair", NULL, crosshair_flags);
 		SetWindowFontScale(3.0f);
 		ImVec2 windowSize = GetWindowSize();
@@ -741,7 +750,7 @@ int main()
 				{
 					lightingSystem.RemoveLight(objectSystem.objects[index].index);
 					objectSystem.RemoveObject(objectSystem.objects[index].type, index);
-					if (index > objectSystem.objects.size()) index--;
+					if (index >= objectSystem.objects.size()) index--;
 					updateLightSettings = true;
 				}
 			}
@@ -767,115 +776,7 @@ int main()
 		}
 
 		End();
-
-		//Text(currentLightIndex == 0 ? "Directional Light" : "Spot Light");
-		//Text("Current Light:");
-		//SameLine(0.0f, spacing);
-
-		//PushButtonRepeat(true);
-		//if (ArrowButton("#leftLightIndex", ImGuiDir_Left))
-		//{
-		//	if (lightingSystem.lightPropertiesList.size() > 0)
-		//	{
-		//		currentLightIndex--;
-		//		currentLightIndex = Clamp(currentLightIndex, 0, lightingSystem.lightPropertiesList.size() - 1);
-		//		updateLightSettings = true;
-		//	}
-		//}
-
-		//SameLine(0.0f, spacing);
-		//Text("%d", currentLightIndex);
-		//SameLine(0.0f, spacing);
-
-		//if (ArrowButton("#rightLightIndex", ImGuiDir_Right))
-		//{
-		//	if (lightingSystem.lightPropertiesList.size() > 0)
-		//	{
-		//		currentLightIndex++;
-		//		currentLightIndex = Clamp(currentLightIndex, 0, lightingSystem.lightPropertiesList.size() - 1);
-		//		updateLightSettings = true;
-		//	}
-		//}
-		//PopButtonRepeat();
-
-		//// Update Current Light Settings
-		//if (updateLightSettings)
-		//{
-		//	if (lightingSystem.lightPropertiesList.size() > 0)
-		//	{
-		//		currentLightInfo = lightingSystem.lightPropertiesList[currentLightIndex];
-		//	}
-
-		//	updateLightSettings = false;
-		//}
-
-
-		//End();
-
-		//Begin("Adjust Box | Settings", NULL, window_flags);
-		//ImVec2 adjustBoxSettingsWindowSize = GetWindowSize();
-		//ImVec2 adjustBoxSettingsWindowPosition = ImVec2(25, adjustLightSettingsWindowPosition.y + adjustLightSettingsWindowSize.y + 25);
-		//SetWindowPos(adjustBoxSettingsWindowPosition);
-		//SetWindowFontScale(1.25f);
-
-		//Text("Current Box:");
-		//SameLine(0.0f, spacing);
-
-		//PushButtonRepeat(true);
-		//if (ArrowButton("#leftBoxIndex", ImGuiDir_Left))
-		//{
-		//	if (boxSystem.boxes.size() > 0)
-		//	{
-		//		currentBoxIndex--;
-		//		currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
-		//		updateBoxSettings = true;
-		//	}
-		//}
-
-		//SameLine(0.0f, spacing);
-		//Text("%d", currentBoxIndex);
-		//SameLine(0.0f, spacing);
-
-		//if (ArrowButton("#rightBoxIndex", ImGuiDir_Right))
-		//{
-		//	if (boxSystem.boxes.size() > 0)
-		//	{
-		//		currentBoxIndex++;
-		//		currentBoxIndex = Clamp(currentBoxIndex, 0, boxSystem.boxes.size() - 1);
-		//		updateBoxSettings = true;
-		//	}
-		//}
-		//PopButtonRepeat();
-
-		//// Update Current Box Settings
-		//if (updateBoxSettings)
-		//{
-		//	if (boxSystem.boxes.size() > 0)
-		//	{
-		//		currentBoxInfo = boxSystem.boxes[currentBoxIndex];
-		//	}
-
-		//	updateBoxSettings = false;
-		//}
-
-		//if (boxSystem.boxes.size() > 0)
-		//{
-		//	DragFloat3("Box Position", value_ptr(currentBoxInfo.position));
-		//	DragFloat("Box X Rotation", &currentBoxInfo.angleX);
-		//	DragFloat("Box Y Rotation", &currentBoxInfo.angleY);
-		//	Checkbox("Box Auto Rotation", &currentBoxInfo.autoRotation);
-
-		//	boxSystem.boxes[currentBoxIndex] = currentBoxInfo;
-
-		//	if (Button("Remove Box", ImVec2(260, 20)))
-		//	{
-		//		boxSystem.RemoveBox(currentBoxIndex);
-		//		if (currentBoxIndex > 0) currentBoxIndex--;
-		//		updateBoxSettings = true;
-		//	}
-		//}
-
-		//End();
+		// END IMGUI UI ELEMENTS //
 
 		Render();
 		ImGui_ImplOpenGL3_RenderDrawData(GetDrawData());

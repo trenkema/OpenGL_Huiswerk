@@ -88,17 +88,4 @@ void main() {
 	{
 		FragColor = vec4(cubeLightColor, 1.0f);
 	}
-
-	//vec3 lightDir = normalize(pointLight.position);
-	//float diff = max(dot(normal, -lightDir), 0.0f);
-	//vec3 camPos = vec3(0, 3, -3);
-	//vec3 viewDir = normalize(worldPixel.xyz - camPos);
-	//vec3 reflectDir = normalize(reflect(-lightDir, normal));
-	//float spec = pow(max(dot(reflectDir, viewDir), 0.0f), material.shininess);
-
-	//vec3 ambient = pointLight.ambientColor * vec3(texture(material.diffuseSample, uv));
-	//vec3 diffuse = pointLight.diffuseColor * diff * vec3(texture(material.diffuseSample, uv));
-	//vec3 specular = pointLight.specular * spec * vec3(texture(material.specular, uv));
-
-	//FragColor = vec4(ambient + diffuse + specular, 1.0f);
 }

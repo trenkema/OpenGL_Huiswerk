@@ -14,7 +14,6 @@ out vec3 camPos;
 out vec3 cubeLightColor;
 
 void main() {
-	//mat4 trs = world * view * projection;
 	fragPos = world * vec4(vPos, 1.0f);
 	gl_Position = projection * view * world * vec4(vPos, 1.0f);
 	uv = vUV;
